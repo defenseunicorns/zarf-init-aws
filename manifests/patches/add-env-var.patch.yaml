@@ -1,0 +1,16 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pepr-b95dbd80-e078-5eb9-aaf3-bcb9567417d0
+  namespace: pepr-system
+spec:
+  selector:
+    matchLabels:
+      app: pepr-b95dbd80-e078-5eb9-aaf3-bcb9567417d0
+  template:
+    spec:
+      containers:
+        - name: server
+          env:
+            - name: AWS_REGION
+              value: "###ZARF_VAR_AWS_REGION###"

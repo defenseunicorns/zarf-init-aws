@@ -1,0 +1,70 @@
+kind: ZarfPackageConfig
+metadata:
+  name: distro-eks
+  description: Deploy a EKS K8s cluster
+  architecture: multi
+  version: 0.0.3
+
+variables:
+  - name: EKS_CLUSTER_NAME
+    description: The name for the EKS cluster
+    prompt: true
+
+  - name: EKS_INSTANCE_TYPE
+    description: The EC2 instance type for the worker nodes
+    default: t3.small
+
+  - name: EKS_CLUSTER_REGION
+    description: The AWS region to setup the cluster and associated networking
+    default: us-east-1
+
+  - name: EKS_CLUSTER_VERSION
+    description: The Kubernetes version to use for the cluster
+    default: "1.27"
+
+  - name: EBS_DRIVER_VERSION
+    description: The AEBS driver version to use for the cluster (must be available on the K8s version)
+    default: "v1.21.0-eksbuild.1"
+
+components:
+  - name: load-eksctl
+    required: true
+    files:
+      - source: eks.yaml
+        target: eks.yaml
+      - source: https://github.com/weaveworks/eksctl/releases/download/v0.157.0/eksctl_Darwin_amd64.tar.gz
+        target: binaries/eksctl_Darwin_x86_64
+        executable: true
+        shasum: fc7aad90ff6b0e4e15fd95c35431a4cd08d2044d7155d38816bb6ff6198dadff
+        extractPath: eksctl
+      - source: https://github.com/weaveworks/eksctl/releases/download/v0.157.0/eksctl_Darwin_arm64.tar.gz
+        target: binaries/eksctl_Darwin_arm64
+        executable: true
+        shasum: 9bfbbe2f5fd4dc829f426cbe7c2766c3b2d92cf9f731a5e9870d233eacf742f7
+        extractPath: eksctl
+      - source: https://github.com/weaveworks/eksctl/releases/download/v0.157.0/eksctl_Linux_amd64.tar.gz
+        target: binaries/eksctl_Linux_x86_64
+        executable: true
+        shasum: c1eaafdf983d58eb6dd3397fa73929ef89499899487a5c079ea8f6e43f9070b4
+        extractPath: eksctl
+
+  - name: deploy-eks-cluster
+    description: Create an EKS cluster!
+    actions:
+      onDeploy:
+        before:
+          - cmd: ./binaries/eksctl_$(uname -s)_$(uname -m) create cluster --dry-run -f eks.yaml
+          - cmd: sleep 15
+          - cmd: ./binaries/eksctl_$(uname -s)_$(uname -m) create cluster -f eks.yaml
+          - cmd: ./binaries/eksctl_$(uname -s)_$(uname -m) utils write-kubeconfig -c ${ZARF_VAR_EKS_CLUSTER_NAME}
+
+  - name: teardown-eks-cluster
+    description: Delete the EKS cluster that this package was used to create.
+    actions:
+      onDeploy:
+        before:
+          - cmd: ./binaries/eksctl_$(uname -s)_$(uname -m) delete cluster -f eks.yaml --disable-nodegroup-eviction --wait
+        after:
+          # clean up after ourselves
+          - cmd: rm -rf binaries
+          - cmd: rm -f eks.yaml

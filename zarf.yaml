@@ -1,0 +1,81 @@
+kind: ZarfInitConfig
+metadata:
+  name: ecr-hook
+  description: 'Pepr Module: Use ECR as an external Zarf registry'
+  url: https://github.com/defenseunicorns/pepr
+  version: 0.0.1
+
+constants:
+  - name: PEPR_IMAGE
+    value: "###ZARF_PKG_TMPL_PEPR_IMAGE###"
+
+  - name: PEPR_IMAGE_TAG
+    value: "###ZARF_PKG_TMPL_PEPR_IMAGE_TAG###"
+
+variables:
+  - name: REGISTRY_TYPE
+    description: "Specify whether you want to use a private or public ECR registry"
+    prompt: true
+
+  - name: AWS_REGION
+    description: "The AWS region the ECR registry is located in"
+    prompt: true
+
+  - name: ECR_HOOK_ROLE_ARN
+    description: "The ARN of an IAM role to give Pepr necessary permissions to list and create ECR repositories"
+    prompt: true
+
+  - name: ECR_CREDENTIAL_HELPER_ROLE_ARN
+    description: "The ARN of an IAM role to give the zarf-ecr-credential-helper necessary permissions to fetch ECR tokens"
+    prompt: true
+
+components:
+  - name: ecr-bootstrap
+    description: "Bootstrap the deployment by creating an ECR repository for the Pepr controller image"
+    required: true
+    files:
+      - source: ./ecr-bootstrap.sh
+        target: ./ecr-bootstrap.sh
+        executable: true
+    actions:
+      onDeploy:
+        after:
+          - cmd: |
+              export REGISTRY_TYPE="$ZARF_VAR_REGISTRY_TYPE";
+              export AWS_REGION="$ZARF_VAR_AWS_REGION";
+              ./ecr-bootstrap.sh
+            description: "Create ECR repository for the Pepr controller image"
+          - cmd: rm ./ecr-bootstrap.sh
+            description: "Remove the bootstrap script from disk"
+
+  - name: ecr-hook
+    description: "Pepr webhook that creates ECR repos for images during package deployments"
+    required: true
+    manifests:
+      - name: module
+        namespace: pepr-system
+        kustomizations:
+          - manifests
+    images:
+      - "###ZARF_PKG_TMPL_PEPR_IMAGE_DOMAIN###/###ZARF_PKG_TMPL_PEPR_IMAGE###:###ZARF_PKG_TMPL_PEPR_IMAGE_TAG###"
+
+  - name: zarf-agent
+    required: true
+    import:
+      path: packages/zarf-agent
+      # PR to allow importing zarf-agent component from published skeleton init package: https://github.com/defenseunicorns/zarf/pull/2025
+      # TODO: when the above PR is merged, update to import component from published skeleton package,
+      # and remove the "packages/zarf-agent" directory.
+      # url: oci://ghcr.io/defenseunicorns/packages/init:v0.29.2-skeleton
+      # name: zarf-agent
+
+  - name: zarf-ecr-credential-helper
+    description: "CronJob that updates Zarf image pull secrets with new ECR tokens"
+    required: false
+    manifests:
+      - name: zarf-ecr-credential-helper
+        namespace: zarf
+        files:
+          - manifests/zarf-ecr-credential-helper.yaml
+    images:
+      - lucasrod96/zarf-ecr-credential-helper:v0.0.1

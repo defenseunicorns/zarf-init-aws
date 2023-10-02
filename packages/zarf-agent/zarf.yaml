@@ -1,0 +1,43 @@
+kind: ZarfPackageConfig
+metadata:
+  name: init-package-zarf-agent
+  description: Install the zarf agent mutating webhook on a new cluster
+
+constants:
+  - name: AGENT_IMAGE
+    value: "###ZARF_PKG_TMPL_AGENT_IMAGE###"
+  - name: AGENT_IMAGE_TAG
+    value: "###ZARF_PKG_TMPL_AGENT_IMAGE_TAG###"
+
+components:
+  - name: zarf-agent
+    description: |
+      A Kubernetes mutating webhook to enable automated URL rewriting for container
+      images and git repository references in Kubernetes manifests. This prevents
+      the need to manually update URLs from their original sources to the Zarf-managed
+      docker registry and git server.
+    required: true
+    images:
+      - "###ZARF_PKG_TMPL_AGENT_IMAGE_DOMAIN######ZARF_PKG_TMPL_AGENT_IMAGE###:###ZARF_PKG_TMPL_AGENT_IMAGE_TAG###"
+    manifests:
+      - name: zarf-agent
+        namespace: zarf
+        files:
+          - manifests/service.yaml
+          - manifests/secret.yaml
+          - manifests/deployment.yaml
+          - manifests/webhook.yaml
+    actions:
+      onCreate:
+        before:
+          - cmd: "make init-package-local-agent AGENT_IMAGE_TAG=\"###ZARF_PKG_TMPL_AGENT_IMAGE_TAG###\" ARCH=\"###ZARF_PKG_ARCH###\""
+            dir: ../..
+            description: Build the local agent image (if 'AGENT_IMAGE_TAG' was specified as 'local')
+      onDeploy:
+        after:
+          - wait:
+              cluster:
+                kind: pod
+                namespace: zarf
+                name: app=agent-hook
+                condition: Ready
