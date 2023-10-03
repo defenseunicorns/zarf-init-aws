@@ -112,7 +112,7 @@ zarf init \
     --set=ECR_CREDENTIAL_HELPER_ROLE_ARN="arn:aws:iam::${AWS_ACCOUNT_ID}:role/zarf-ecr" \
     --components="zarf-ecr-credential-helper" \ # This component is optional, so we need to specify that we want to deploy it
     -a amd64 \
-    -l trace \
+    -l debug \
     --confirm
 
 ```
@@ -138,7 +138,7 @@ zarf init \
     --set=ECR_CREDENTIAL_HELPER_ROLE_ARN="arn:aws:iam::${AWS_ACCOUNT_ID}:role/zarf-ecr" \
     --components="zarf-ecr-credential-helper" \ # This component is optional, so we need to specify that we want to deploy it
     -a amd64 \
-    -l trace \
+    -l debug \
     --confirm
 
 ```

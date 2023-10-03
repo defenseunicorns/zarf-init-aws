@@ -23,7 +23,6 @@ clean: ## Clean the build directory
 
 destroy: ## Run `zarf destroy` on the current cluster
 	zarf destroy --confirm --remove-components
-	rm -fr build
 
 delete-packages: ## Delete all Zarf package tarballs in the project recursively
 	find . -type f -name 'zarf-package-*' -delete
@@ -50,5 +49,8 @@ init-package-local-agent:
 build-local-agent-image: ## Build the Zarf agent image to be used in a locally built init package
 	docker buildx build --load --platform linux/$(ARCH) --tag ghcr.io/defenseunicorns/zarf/agent:local .
 
-ecr-init-package: ## Create the ECR zarf init package
-	zarf package create -o build -a $(ARCH) --confirm . -l debug
+aws-init-package: ## Build the AWS zarf init package
+	zarf package create -o build -a $(ARCH) --confirm .
+
+eks-package: ## Build the eks package
+	zarf package create packages/eks -o build --confirm

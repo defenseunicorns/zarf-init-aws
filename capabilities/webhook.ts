@@ -10,7 +10,11 @@ import {
   publicECR,
 } from "./ecr";
 
-import { DeployedPackage, DeployedComponent } from "./zarf-types";
+import {
+  DeployedPackage,
+  DeployedComponent,
+  ZarfComponent,
+} from "./zarf-types";
 
 /**
  * The ECR Capability creates ECR repositories for a Zarf managed ECR registry
@@ -93,7 +97,7 @@ When(a.Secret)
 
             // Update the secret noting that the webhook is running for this component
             secretData.componentWebhooks[deployedComponent.name] = {
-              webhookName: {
+              "ecr-webhook": {
                 name: webhookName,
                 status: "Running",
                 observedGeneration: secretData.generation,
@@ -104,7 +108,7 @@ When(a.Secret)
               deployedComponent,
               result.registryURL,
               secret.metadata.name,
-              deployedComponent.name,
+              component,
             );
           }
         }
@@ -123,31 +127,36 @@ async function createReposAndUpdateStatus(
   deployedComponent: DeployedComponent,
   registryURL: string,
   secretName: string,
-  componentName: string,
+  zarfComponent: ZarfComponent,
 ): Promise<void> {
   let webhookStatus = "Succeeded";
 
   try {
-    await createRepos(deployedComponent, registryURL);
+    await createRepos(deployedComponent, zarfComponent, registryURL);
   } catch (err) {
     if (err.message.includes("Error creating ECR repositories")) {
       Log.error(`Failed to create ECR repositories: ${err.message}`);
       webhookStatus = "Failed";
     }
   } finally {
-    await updateWebhookStatus(secretName, componentName, webhookStatus);
+    await updateWebhookStatus(
+      secretName,
+      deployedComponent.name,
+      webhookStatus,
+    );
   }
 }
 
 async function createRepos(
   deployedComponent: DeployedComponent,
+  zarfComponent: ZarfComponent,
   registryURL: string,
 ) {
   Log.info(
     `Gathering a list of ECR repository names to create for component '${deployedComponent?.name}'`,
   );
 
-  const repoNames = getRepositoryNames(deployedComponent?.images);
+  const repoNames = getRepositoryNames(zarfComponent?.images);
 
   if (!repoNames) {
     Log.info(

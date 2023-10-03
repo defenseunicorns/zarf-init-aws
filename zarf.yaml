@@ -46,7 +46,7 @@ components:
               ./ecr-bootstrap.sh
             description: "Create ECR repository for the Pepr controller image"
           - cmd: rm ./ecr-bootstrap.sh
-            description: "Remove the bootstrap script from disk"
+            description: "Cleanup the bootstrap script from disk"
 
   - name: ecr-hook
     description: "Pepr webhook that creates ECR repos for images during package deployments"
@@ -63,6 +63,7 @@ components:
     required: true
     import:
       path: packages/zarf-agent
+      name: zarf-agent
       # PR to allow importing zarf-agent component from published skeleton init package: https://github.com/defenseunicorns/zarf/pull/2025
       # TODO: when the above PR is merged, update to import component from published skeleton package,
       # and remove the "packages/zarf-agent" directory.
