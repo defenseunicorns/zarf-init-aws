@@ -59,8 +59,8 @@ create() {
 
 delete() {
     # Fetch policy ARNs
-    ECR_WEBHOOK_POLICY_ARN=$(aws iam list-policies --query "Policies[?PolicyName==${WEBHOOK_IAM_NAME}].Arn" --output text)
-    ECR_CREDENTIAL_HELPER_POLICY_ARN=$(aws iam list-policies --query "Policies[?PolicyName==${CREDENTIAL_HELPER_IAM_NAME}].Arn" --output text)
+    ECR_WEBHOOK_POLICY_ARN=$(aws iam list-policies --query "Policies[?PolicyName=='${WEBHOOK_IAM_NAME}'].Arn" --output text)
+    ECR_CREDENTIAL_HELPER_POLICY_ARN=$(aws iam list-policies --query "Policies[?PolicyName=='${CREDENTIAL_HELPER_IAM_NAME}'].Arn" --output text)
 
     # Detach policies from roles
     aws iam detach-role-policy --role-name "$WEBHOOK_IAM_NAME" --policy-arn "$ECR_WEBHOOK_POLICY_ARN"
