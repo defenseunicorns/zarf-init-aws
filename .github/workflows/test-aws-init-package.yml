@@ -49,6 +49,7 @@ jobs:
           git clone --depth 1 https://github.com/defenseunicorns/zarf.git "$tmpdir"
           cd "$tmpdir"
           make build-cli-linux-amd
+          mkdir -p "${GITHUB_WORKSPACE}/build"
           mv build/zarf "${GITHUB_WORKSPACE}/build"
           sudo cp "${GITHUB_WORKSPACE}/build/zarf" /usr/local/bin
           chmod +x /usr/local/bin/zarf
