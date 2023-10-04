@@ -43,15 +43,9 @@ jobs:
         uses: defenseunicorns/zarf/.github/actions/golang@main
 
       # TODO: Use setup-zarf github action once Zarf v0.30.0 is released
-      - name: Build Zarf binary from source
+      - name: Install latest version of Zarf
         run: |
-          tmpdir="$(mktemp -d)"
-          git clone --depth 1 https://github.com/defenseunicorns/zarf.git "$tmpdir"
-          cd "$tmpdir"
-          make build-cli-linux-amd
-          mkdir -p "${GITHUB_WORKSPACE}/build"
-          mv build/zarf "${GITHUB_WORKSPACE}/build"
-          sudo cp "${GITHUB_WORKSPACE}/build/zarf" /usr/local/bin
+          sudo curl -sL "https://github.com/defenseunicorns/zarf/releases/download/v0.30.0-rc2/zarf_v0.30.0-rc2_Linux_amd64" -o /usr/local/bin/zarf
           sudo chmod +x /usr/local/bin/zarf
 
       - name: Build AWS init package
