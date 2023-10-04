@@ -42,7 +42,6 @@ jobs:
           make build-cli-linux-amd
           chmod +x build/zarf
           sudo mv build/zarf /usr/local/bin
-          rm -rf "$tmpdir"
           zarf version
 
       # TODO:
