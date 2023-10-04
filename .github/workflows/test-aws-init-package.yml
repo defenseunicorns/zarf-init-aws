@@ -75,8 +75,7 @@ jobs:
       - name: Create IAM roles for IRSA authentication
         working-directory: bootstrap/iam
         id: iam-create
-        run: |
-          ./iam.sh create ${{ inputs.cluster_name || 'zarf-init-aws-test' }}
+        run: ./iam.sh create ${{ inputs.cluster_name || 'zarf-init-aws-test' }}
 
       - name: Zarf init with private ECR registry
         working-directory: ./build
