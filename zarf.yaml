@@ -34,7 +34,7 @@ components:
     description: "Bootstrap the deployment by creating an ECR repository for the Pepr controller image"
     required: true
     files:
-      - source: ./ecr-bootstrap.sh
+      - source: bootstrap/ecr.sh
         target: ./ecr-bootstrap.sh
         executable: true
     actions:

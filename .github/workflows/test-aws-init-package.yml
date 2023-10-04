@@ -31,8 +31,19 @@ jobs:
       - name: Checkout
         uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac # v4.0.0
 
-      - name: Install latest version of Zarf
-        uses: defenseunicorns/setup-zarf@main
+      # - name: Install latest version of Zarf
+      #   uses: defenseunicorns/setup-zarf@main
+
+      - name: Build Zarf binary from source
+        run: |
+          tmpdir="$(mktemp -d)"
+          git clone --depth 1 https://github.com/defenseunicorns/zarf.git "$tmpdir"
+          cd "$tmpdir"
+          make build-cli-linux-amd
+          chmod +x build/zarf
+          sudo mv build/zarf /usr/local/bin
+          rm -rf "$tmpdir"
+          zarf version
 
       # TODO:
       # - ensure IAM role has permissions for both public and private ECR
@@ -58,6 +69,11 @@ jobs:
             --set=EKS_INSTANCE_TYPE=${{ inputs.instance_type || 't3.medium' }} \
             --confirm
 
+      - name: Create IAM roles for IRSA authentication
+        working-directory: bootstrap/iam
+        id: iam-create
+        run: ./iam.sh create ${{ inputs.cluster_name || 'zarf-init-aws-test' }}
+
       - name: Zarf init with private ECR registry
         working-directory: ./build
         run: |
@@ -74,8 +90,8 @@ jobs:
               --registry-push-password="${ECR_AUTH_TOKEN}" \
               --set=REGISTRY_TYPE="${REGISTRY_TYPE}" \
               --set=AWS_REGION="${AWS_REGION}" \
-              --set=ECR_HOOK_ROLE_ARN="arn:aws:iam::${AWS_ACCOUNT_ID}:role/zarf-ecr" \
-              --set=ECR_CREDENTIAL_HELPER_ROLE_ARN="arn:aws:iam::${AWS_ACCOUNT_ID}:role/zarf-ecr" \
+              --set=ECR_HOOK_ROLE_ARN=${{ steps.iam-create.outputs.ecr-webhook-role-arn }} \
+              --set=ECR_CREDENTIAL_HELPER_ROLE_ARN=${{ steps.iam-create.outputs.ecr-credential-helper-role-arn }} \
               --components="zarf-ecr-credential-helper" \
               -a amd64 \
               -l debug \
@@ -98,6 +114,11 @@ jobs:
           do
             aws ecr delete-repository --repository-name "${repo}" --force || true
           done
+
+      - name: Delete IAM roles
+        if: always()
+        working-directory: bootstrap/iam
+        run: ./iam.sh delete
 
       - name: Save logs
         if: always()
