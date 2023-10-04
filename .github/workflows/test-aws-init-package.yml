@@ -132,7 +132,7 @@ jobs:
       - name: Teardown the cluster
         if: always()
         run: |
-          zarf package deploy build/zarf-package-distro-eks-multi-0.0.3.tar.zst \
+          ./build/zarf package deploy build/zarf-package-distro-eks-multi-0.0.3.tar.zst \
             --components=teardown-eks-cluster \
             --set=EKS_CLUSTER_NAME=${{ inputs.cluster_name_private }} \
             --confirm
@@ -228,7 +228,7 @@ jobs:
       - name: Teardown the cluster
         if: always()
         run: |
-          zarf package deploy build/zarf-package-distro-eks-multi-0.0.3.tar.zst \
+          ./build/zarf package deploy build/zarf-package-distro-eks-multi-0.0.3.tar.zst \
             --components=teardown-eks-cluster \
             --set=EKS_CLUSTER_NAME=${{ inputs.cluster_name_public }} \
             --confirm
