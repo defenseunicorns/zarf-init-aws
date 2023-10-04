@@ -26,11 +26,11 @@ if ! aws "$ECR_CMD" describe-repositories \
         --repository-names "$REPO_NAME" \
         --region "$AWS_REGION" >/dev/null 2>&1
 then
-    ARGS=("--repository-name" "$REPO_NAME" "--region" "$AWS_REGION")
+    ARGS="--repository-name $REPO_NAME --region $AWS_REGION"
     
     if [ "$REGISTRY_TYPE" = "private" ]; then
-        ARGS+=("--image-scanning-configuration" "scanOnPush=true" "--image-tag-mutability" "IMMUTABLE")
+        ARGS="$ARGS --image-scanning-configuration scanOnPush=true --image-tag-mutability IMMUTABLE"
     fi
     
-    aws "$ECR_CMD" create-repository "${ARGS[@]}"
+    aws "$ECR_CMD" create-repository "$ARGS"
 fi
