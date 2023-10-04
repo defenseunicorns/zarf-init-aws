@@ -37,6 +37,9 @@ jobs:
       # - name: Install latest version of Zarf
       #   uses: defenseunicorns/setup-zarf@main
 
+      - name: Setup Go
+        uses: defenseunicorns/zarf/.github/actions/golang@main
+
       - name: Build Zarf binary from source
         run: |
           tmpdir="$(mktemp -d)"
