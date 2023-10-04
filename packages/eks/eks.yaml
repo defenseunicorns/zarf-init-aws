@@ -21,3 +21,4 @@ managedNodeGroups:
   minSize: 3
   maxSize: 6
   spot: true
+  availabilityZones: ["us-east-1a", "us-east-1b", "us-east-1c"]
