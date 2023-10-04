@@ -9,14 +9,14 @@ on:
 
   workflow_dispatch:
     inputs:
-      cluster_name_public:
-        type: string
-        default: "zarf-init-aws-public-test"
-        description: Name of the eks cluster for public ECR test
       cluster_name_private:
         type: string
         default: "zarf-init-aws-private-test"
         description: Name of the eks cluster for private ECR test
+      cluster_name_public:
+        type: string
+        default: "zarf-init-aws-public-test"
+        description: Name of the eks cluster for public ECR test
       instance_type:
         type: string
         default: t3.medium
@@ -99,14 +99,14 @@ jobs:
         run: |
           ./build/zarf package deploy build/zarf-package-distro-eks-multi-0.0.3.tar.zst \
             --components=deploy-eks-cluster \
-            --set=EKS_CLUSTER_NAME=${{ inputs.cluster_name_private }} \
+            --set=EKS_CLUSTER_NAME=${{ inputs.cluster_name_private || 'zarf-init-aws-private-test' }} \
             --set=EKS_INSTANCE_TYPE=${{ inputs.instance_type }} \
             --confirm
 
       - name: Create IAM roles for IRSA authentication
         working-directory: hack/iam
         id: iam-create
-        run: ./iam.sh create ${{ inputs.cluster_name_private }}
+        run: ./iam.sh create ${{ inputs.cluster_name_private || 'zarf-init-aws-private-test' }}
 
       - name: Zarf init with private ECR registry
         run: |
@@ -135,7 +135,7 @@ jobs:
         run: |
           ./build/zarf package deploy build/zarf-package-distro-eks-multi-0.0.3.tar.zst \
             --components=teardown-eks-cluster \
-            --set=EKS_CLUSTER_NAME=${{ inputs.cluster_name_private }} \
+            --set=EKS_CLUSTER_NAME=${{ inputs.cluster_name_private || 'zarf-init-aws-private-test' }} \
             --confirm
 
       - name: Delete private ECR repositories
@@ -195,14 +195,14 @@ jobs:
         run: |
           ./build/zarf package deploy build/zarf-package-distro-eks-multi-0.0.3.tar.zst \
             --components=deploy-eks-cluster \
-            --set=EKS_CLUSTER_NAME=${{ inputs.cluster_name_public }} \
+            --set=EKS_CLUSTER_NAME=${{ inputs.cluster_name_public || 'zarf-init-aws-public-test' }} \
             --set=EKS_INSTANCE_TYPE=${{ inputs.instance_type }} \
             --confirm
 
       - name: Create IAM roles for IRSA authentication
         working-directory: hack/iam
         id: iam-create
-        run: ./iam.sh create ${{ inputs.cluster_name_public }}
+        run: ./iam.sh create ${{ inputs.cluster_name_public || 'zarf-init-aws-public-test' }}
 
       - name: Zarf init with public ECR registry
         run: |
@@ -231,7 +231,7 @@ jobs:
         run: |
           ./build/zarf package deploy build/zarf-package-distro-eks-multi-0.0.3.tar.zst \
             --components=teardown-eks-cluster \
-            --set=EKS_CLUSTER_NAME=${{ inputs.cluster_name_public }} \
+            --set=EKS_CLUSTER_NAME=${{ inputs.cluster_name_public || 'zarf-init-aws-public-test' }} \
             --confirm
 
       - name: Delete public ECR repositories
