@@ -40,6 +40,7 @@ jobs:
       - name: Setup Go
         uses: defenseunicorns/zarf/.github/actions/golang@main
 
+      # TODO: Use setup-zarf github action once Zarf v0.30.0 is released
       - name: Build Zarf binary from source
         run: |
           tmpdir="$(mktemp -d)"
@@ -50,9 +51,6 @@ jobs:
           sudo mv build/zarf /usr/local/bin
           zarf version
 
-      # TODO:
-      # - ensure IAM role has permissions for both public and private ECR
-      # - create IAM roles for Pepr webhook and credential helper
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@8c3f20df09ac63af7b3ae3d7c91f105f857d8497 # v4.0.0
         with:

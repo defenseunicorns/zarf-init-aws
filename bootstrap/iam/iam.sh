@@ -15,8 +15,12 @@ create() {
     fi
 
     # Replace the placeholder in the JSON files with the EKS Cluster ID
-    sed -i "s/{{EKS_CLUSTER_ID}}/$EKS_CLUSTER_ID/g" ecr-webhook-role.json
-    sed -i "s/{{EKS_CLUSTER_ID}}/$EKS_CLUSTER_ID/g" ecr-credential-helper-role.json
+    SED_CMD="sed"
+    if [ "$(uname -s)" = "Darwin" ]; then
+        SED_CMD="gsed"
+    fi
+    "$SED_CMD" -i "s/{{EKS_CLUSTER_ID}}/$EKS_CLUSTER_ID/g" ecr-webhook-role.json
+    "$SED_CMD" -i "s/{{EKS_CLUSTER_ID}}/$EKS_CLUSTER_ID/g" ecr-credential-helper-role.json
 
     # Create IAM policies from JSON files
     ECR_WEBHOOK_POLICY_ARN=$(aws iam create-policy --policy-name ecr-webhook --policy-document file://ecr-webhook-policy.json --query "Policy.Arn" --output text)
