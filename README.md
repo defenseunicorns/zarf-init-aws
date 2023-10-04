@@ -1,4 +1,4 @@
-# Zarf Web UI - DevSecOps for Air Gap
+# Zarf Init Package for AWS - DevSecOps for Air Gap
 
 [![Latest Release](https://img.shields.io/github/v/release/defenseunicorns/zarf-init-aws)](https://github.com/defenseunicorns/zarf-init-aws/releases)
 [![Go version](https://img.shields.io/github/go-mod/go-version/defenseunicorns/zarf-init-aws?filename=go.mod)](https://go.dev/)
