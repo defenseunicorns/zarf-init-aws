@@ -73,7 +73,7 @@ jobs:
             --confirm
 
       - name: Create IAM roles for IRSA authentication
-        working-directory: bootstrap/iam
+        working-directory: hack/iam
         id: iam-create
         run: ./iam.sh create ${{ inputs.cluster_name || 'zarf-init-aws-test' }}
 
@@ -120,7 +120,7 @@ jobs:
 
       - name: Delete IAM roles
         if: always()
-        working-directory: bootstrap/iam
+        working-directory: hack/iam
         run: ./iam.sh delete
 
       - name: Save logs

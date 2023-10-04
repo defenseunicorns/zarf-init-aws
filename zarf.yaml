@@ -34,8 +34,8 @@ components:
     description: "Bootstrap the deployment by creating an ECR repository for the Pepr controller image"
     required: true
     files:
-      - source: bootstrap/ecr.sh
-        target: bootstrap/ecr.sh
+      - source: hack/ecr.sh
+        target: hack/ecr.sh
         executable: true
     actions:
       onDeploy:
@@ -43,7 +43,7 @@ components:
           - cmd: |
               export REGISTRY_TYPE="$ZARF_VAR_REGISTRY_TYPE";
               export AWS_REGION="$ZARF_VAR_AWS_REGION";
-              ./bootstrap/ecr.sh
+              ./hack/ecr.sh
             description: "Create ECR repository for the Pepr controller image"
 
   - name: ecr-hook
