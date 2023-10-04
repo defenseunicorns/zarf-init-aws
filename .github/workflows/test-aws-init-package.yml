@@ -7,12 +7,16 @@ on:
     branches:
       - main
 
-  workflow_dispatch: ## Give us the ability to run this manually
+  workflow_dispatch:
     inputs:
-      cluster_name:
+      cluster_name_public:
         type: string
-        default: zarf-init-aws-test
-        description: Name of the eks cluster that the test will create
+        default: "zarf-init-aws-public-test"
+        description: Name of the eks cluster for public ECR test
+      cluster_name_private:
+        type: string
+        default: "zarf-init-aws-private-test"
+        description: Name of the eks cluster for private ECR test
       instance_type:
         type: string
         default: t3.medium
@@ -28,14 +32,12 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  validate:
+  # Build AWS init package and EKS package
+  build:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac # v4.0.0
-
-      # - name: Install latest version of Zarf
-      #   uses: defenseunicorns/setup-zarf@main
 
       - name: Setup Go
         uses: defenseunicorns/zarf/.github/actions/golang@main
@@ -47,9 +49,37 @@ jobs:
           git clone --depth 1 https://github.com/defenseunicorns/zarf.git "$tmpdir"
           cd "$tmpdir"
           make build-cli-linux-amd
-          chmod +x build/zarf
-          sudo mv build/zarf /usr/local/bin
-          zarf version
+          mv build/zarf "${GITHUB_WORKSPACE}/build"
+          sudo cp "${GITHUB_WORKSPACE}/build/zarf" /usr/local/bin
+          chmod +x /usr/local/bin/zarf
+
+      - name: Build AWS init package
+        run: make aws-init-package
+  
+      - name: Build EKS package
+        run: make eks-package
+
+      # Upload the contents of the build directory for later stages to use
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@a8a3f3ad30e3422c9c7b888a15615d19a852ae32 # v3.1.3
+        with:
+          name: build-artifacts
+          path: build/
+          retention-days: 1
+
+  # Deploy and test AWS init package with private ECR registry
+  validate-private-ecr:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac # v4.0.0
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a # v3.0.2
+        with:
+          name: build-artifacts
+          path: build/
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@8c3f20df09ac63af7b3ae3d7c91f105f857d8497 # v4.0.0
@@ -58,27 +88,26 @@ jobs:
           aws-region: us-east-1
           role-duration-seconds: 14400
 
-      - name: Build the AWS init package
-        run: make aws-init-package
+      # - name: Install latest version of Zarf
+      #   uses: defenseunicorns/setup-zarf@main
 
-      - name: Build the eks package
-        run: make eks-package
+      - name: Make Zarf executable
+        run: chmod +x build/zarf
 
-      - name: Deploy the eks package
+      - name: Deploy EKS package
         run: |
-          zarf package deploy build/zarf-package-distro-eks-multi-0.0.3.tar.zst \
+          ./build/zarf package deploy build/zarf-package-distro-eks-multi-0.0.3.tar.zst \
             --components=deploy-eks-cluster \
-            --set=EKS_CLUSTER_NAME=${{ inputs.cluster_name || 'zarf-init-aws-test' }} \
-            --set=EKS_INSTANCE_TYPE=${{ inputs.instance_type || 't3.medium' }} \
+            --set=EKS_CLUSTER_NAME=${{ inputs.cluster_name_private }} \
+            --set=EKS_INSTANCE_TYPE=${{ inputs.instance_type }} \
             --confirm
 
       - name: Create IAM roles for IRSA authentication
         working-directory: hack/iam
         id: iam-create
-        run: ./iam.sh create ${{ inputs.cluster_name || 'zarf-init-aws-test' }}
+        run: ./iam.sh create ${{ inputs.cluster_name_private }}
 
       - name: Zarf init with private ECR registry
-        working-directory: ./build
         run: |
           REGISTRY_TYPE="private"
           AWS_REGION="us-east-1"
@@ -87,7 +116,7 @@ jobs:
           REGISTRY_URL="${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
           ECR_AUTH_TOKEN=$(aws ecr get-login-password --region "${AWS_REGION}")
           
-          zarf init \
+          ./build/zarf init \
               --registry-url="${REGISTRY_URL}" \
               --registry-push-username="AWS" \
               --registry-push-password="${ECR_AUTH_TOKEN}" \
@@ -105,10 +134,10 @@ jobs:
         run: |
           zarf package deploy build/zarf-package-distro-eks-multi-0.0.3.tar.zst \
             --components=teardown-eks-cluster \
-            --set=EKS_CLUSTER_NAME=${{ inputs.cluster_name || 'zarf-init-aws-test' }} \
+            --set=EKS_CLUSTER_NAME=${{ inputs.cluster_name_private }} \
             --confirm
 
-      - name: Delete ECR repositories
+      - name: Delete private ECR repositories
         if: always()
         run: |
           repos=("defenseunicorns/pepr/controller" "defenseunicorns/zarf/agent" "lucasrod96/zarf-ecr-credential-helper")
@@ -116,6 +145,102 @@ jobs:
           for repo in "${repos[@]}"
           do
             aws ecr delete-repository --repository-name "${repo}" --force || true
+          done
+
+      - name: Delete IAM roles
+        if: always()
+        working-directory: hack/iam
+        run: ./iam.sh delete
+
+      - name: Save logs
+        if: always()
+        uses: defenseunicorns/zarf/.github/actions/save-logs@main
+
+      # TODO: add slack webhook URL secret
+      # - name: Send trigger to Slack on workflow failure
+      #   if: failure()
+      #   uses: defenseunicorns/zarf/.github/actions/slack@main
+      #   with:
+      #     slack-webhook-url: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+  # Deploy and test AWS init package with public ECR registry
+  validate-public-ecr:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac # v4.0.0
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a # v3.0.2
+        with:
+          name: build-artifacts
+          path: build/
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@8c3f20df09ac63af7b3ae3d7c91f105f857d8497 # v4.0.0
+        with:
+          role-to-assume: ${{ secrets.AWS_NIGHTLY_ROLE }}
+          aws-region: us-east-1
+          role-duration-seconds: 14400
+
+      # - name: Install latest version of Zarf
+      #   uses: defenseunicorns/setup-zarf@main
+
+      - name: Make Zarf executable
+        run: chmod +x build/zarf
+
+      - name: Deploy EKS package
+        run: |
+          ./build/zarf package deploy build/zarf-package-distro-eks-multi-0.0.3.tar.zst \
+            --components=deploy-eks-cluster \
+            --set=EKS_CLUSTER_NAME=${{ inputs.cluster_name_public }} \
+            --set=EKS_INSTANCE_TYPE=${{ inputs.instance_type }} \
+            --confirm
+
+      - name: Create IAM roles for IRSA authentication
+        working-directory: hack/iam
+        id: iam-create
+        run: ./iam.sh create ${{ inputs.cluster_name_public }}
+
+      - name: Zarf init with public ECR registry
+        run: |
+          REGISTRY_TYPE="public"
+          AWS_REGION="us-east-1"
+          
+          AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query 'Account' --output text)
+          REGISTRY_URL=$(aws ecr-public describe-registries --query 'registries[0].registryUri' --output text)
+          ECR_AUTH_TOKEN=$(aws ecr-public get-login-password --region "${AWS_REGION}")
+          
+          ./build/zarf init \
+              --registry-url="${REGISTRY_URL}" \
+              --registry-push-username="AWS" \
+              --registry-push-password="${ECR_AUTH_TOKEN}" \
+              --set=REGISTRY_TYPE="${REGISTRY_TYPE}" \
+              --set=AWS_REGION="${AWS_REGION}" \
+              --set=ECR_HOOK_ROLE_ARN=${{ steps.iam-create.outputs.ecr-webhook-role-arn }} \
+              --set=ECR_CREDENTIAL_HELPER_ROLE_ARN=${{ steps.iam-create.outputs.ecr-credential-helper-role-arn }} \
+              --components="zarf-ecr-credential-helper" \
+              -a amd64 \
+              -l debug \
+              --confirm
+
+      - name: Teardown the cluster
+        if: always()
+        run: |
+          zarf package deploy build/zarf-package-distro-eks-multi-0.0.3.tar.zst \
+            --components=teardown-eks-cluster \
+            --set=EKS_CLUSTER_NAME=${{ inputs.cluster_name_public }} \
+            --confirm
+
+      - name: Delete public ECR repositories
+        if: always()
+        run: |
+          repos=("defenseunicorns/pepr/controller" "defenseunicorns/zarf/agent" "lucasrod96/zarf-ecr-credential-helper")
+
+          for repo in "${repos[@]}"
+          do
+            aws ecr-public delete-repository --repository-name "${repo}" --force || true
           done
 
       - name: Delete IAM roles
