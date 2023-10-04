@@ -67,10 +67,6 @@ components:
       # and remove the "packages/zarf-agent" directory.
       # url: oci://ghcr.io/defenseunicorns/packages/init:v0.29.2-skeleton
       # name: zarf-agent
-    actions:
-      onDeploy:
-        onFailure:
-          - cmd: zarf tools kubectl logs -n pepr-system -l app=pepr-b95dbd80-e078-5eb9-aaf3-bcb9567417d0 --all-containers=true
 
   - name: zarf-ecr-credential-helper
     description: "CronJob that updates Zarf image pull secrets with new ECR tokens"
