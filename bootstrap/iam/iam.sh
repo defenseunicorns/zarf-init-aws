@@ -36,9 +36,9 @@ create() {
     ECR_WEBHOOK_ROLE_ARN=$(aws iam create-role --role-name ecr-webhook --assume-role-policy-document file://ecr-webhook-role.json --query "Role.Arn" --output text)
     ECR_CREDENTIAL_HELPER_ROLE_ARN=$(aws iam create-role --role-name ecr-credential-helper --assume-role-policy-document file://ecr-credential-helper-role.json --query "Role.Arn" --output text)
 
-    # Set the IAM role ARNs as GitHub Actions outputs
-    echo "{ecr-webhook-role-arn}={$ECR_WEBHOOK_ROLE_ARN}" >> "$GITHUB_OUTPUT"
-    echo "{ecr-credential-helper-role-arn}={$ECR_CREDENTIAL_HELPER_ROLE_ARN}" >> "$GITHUB_OUTPUT"
+    # Export as env vars to be used as github outputs for zarf init
+    export ECR_WEBHOOK_ROLE_ARN
+    export ECR_CREDENTIAL_HELPER_ROLE_ARN
 
     # Attach policies to roles
     aws iam attach-role-policy --role-name ecr-webhook --policy-arn "$ECR_WEBHOOK_POLICY_ARN"

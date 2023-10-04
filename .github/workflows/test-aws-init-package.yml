@@ -75,7 +75,12 @@ jobs:
       - name: Create IAM roles for IRSA authentication
         working-directory: bootstrap/iam
         id: iam-create
-        run: ./iam.sh create ${{ inputs.cluster_name || 'zarf-init-aws-test' }}
+        run: |
+          ./iam.sh create ${{ inputs.cluster_name || 'zarf-init-aws-test' }}
+          
+          # Set the IAM role ARNs as GitHub Actions outputs
+          echo "{ecr-webhook-role-arn}={$ECR_WEBHOOK_ROLE_ARN}" >> "$GITHUB_OUTPUT"
+          echo "{ecr-credential-helper-role-arn}={$ECR_CREDENTIAL_HELPER_ROLE_ARN}" >> "$GITHUB_OUTPUT"
 
       - name: Zarf init with private ECR registry
         working-directory: ./build
