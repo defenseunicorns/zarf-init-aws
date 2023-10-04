@@ -70,7 +70,7 @@ components:
     actions:
       onDeploy:
         onFailure:
-          - cmd: zarf tools kubectl logs -l app=pepr-b95dbd80-e078-5eb9-aaf3-bcb9567417d0 --all-containers=true
+          - cmd: zarf tools kubectl logs -n pepr-system -l app=pepr-b95dbd80-e078-5eb9-aaf3-bcb9567417d0 --all-containers=true
 
   - name: zarf-ecr-credential-helper
     description: "CronJob that updates Zarf image pull secrets with new ECR tokens"
