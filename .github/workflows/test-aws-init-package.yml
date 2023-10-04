@@ -52,7 +52,7 @@ jobs:
           mkdir -p "${GITHUB_WORKSPACE}/build"
           mv build/zarf "${GITHUB_WORKSPACE}/build"
           sudo cp "${GITHUB_WORKSPACE}/build/zarf" /usr/local/bin
-          chmod +x /usr/local/bin/zarf
+          sudo chmod +x /usr/local/bin/zarf
 
       - name: Build AWS init package
         run: make aws-init-package
