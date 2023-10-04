@@ -15,8 +15,8 @@ create() {
     fi
 
     # Replace the placeholder in the JSON files with the EKS Cluster ID
-    sed -i '' "s/{{EKS_CLUSTER_ID}}/$EKS_CLUSTER_ID/g" "ecr-webhook-role.json"
-    sed -i '' "s/{{EKS_CLUSTER_ID}}/$EKS_CLUSTER_ID/g" "ecr-credential-helper-role.json"
+    sed -i "s/{{EKS_CLUSTER_ID}}/$EKS_CLUSTER_ID/g" ecr-webhook-role.json
+    sed -i "s/{{EKS_CLUSTER_ID}}/$EKS_CLUSTER_ID/g" ecr-credential-helper-role.json
 
     # Create IAM policies from JSON files
     ECR_WEBHOOK_POLICY_ARN=$(aws iam create-policy --policy-name ecr-webhook --policy-document file://ecr-webhook-policy.json --query "Policy.Arn" --output text)
@@ -27,8 +27,8 @@ create() {
     ECR_CREDENTIAL_HELPER_ROLE_ARN=$(aws iam create-role --role-name ecr-credential-helper --assume-role-policy-document file://ecr-credential-helper-role.json --query "Role.Arn" --output text)
 
     # Set the IAM role ARNs as GitHub Actions outputs
-    echo "::set-output name=ecr-webhook-role-arn::$ECR_WEBHOOK_ROLE_ARN"
-    echo "::set-output name=ecr-credential-helper-role-arn::$ECR_CREDENTIAL_HELPER_ROLE_ARN"
+    echo "{ecr-webhook-role-arn}={$ECR_WEBHOOK_ROLE_ARN}" >> "$GITHUB_OUTPUT"
+    echo "{ecr-credential-helper-role-arn}={$ECR_CREDENTIAL_HELPER_ROLE_ARN}" >> "$GITHUB_OUTPUT"
 
     # Attach policies to roles
     aws iam attach-role-policy --role-name ecr-webhook --policy-arn "$ECR_WEBHOOK_POLICY_ARN"
