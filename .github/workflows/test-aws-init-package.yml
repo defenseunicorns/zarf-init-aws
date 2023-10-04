@@ -47,6 +47,8 @@ jobs:
         run: |
           sudo curl -sL "https://github.com/defenseunicorns/zarf/releases/download/v0.30.0-rc2/zarf_v0.30.0-rc2_Linux_amd64" -o /usr/local/bin/zarf
           sudo chmod +x /usr/local/bin/zarf
+          mkdir -p "$GITHUB_WORKSPACE/build"
+          sudo cp /usr/local/bin/zarf "$GITHUB_WORKSPACE/build"
 
       - name: Build AWS init package
         run: make aws-init-package
