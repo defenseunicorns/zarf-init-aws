@@ -7,6 +7,9 @@ create() {
         exit 1
     fi
 
+    # Fetch AWS account ID
+    AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query 'Account' --output text)
+
     # Fetch the EKS Cluster ID
     EKS_CLUSTER_ID=$(aws eks describe-cluster --name "$2" --query "cluster.identity.oidc.issuer" --output text | cut -d '/' -f 5)
     if [ -z "$EKS_CLUSTER_ID" ]; then
@@ -14,11 +17,14 @@ create() {
         exit 1
     fi
 
-    # Replace the placeholder in the JSON files with the EKS Cluster ID
+    # Replace the placeholder in the JSON files with the AWS account ID and EKS cluster ID
     SED_CMD="sed"
     if [ "$(uname -s)" = "Darwin" ]; then
         SED_CMD="gsed"
     fi
+    "$SED_CMD" -i "s/{{AWS_ACCOUNT_ID}}/$AWS_ACCOUNT_ID/g" ecr-webhook-role.json
+    "$SED_CMD" -i "s/{{AWS_ACCOUNT_ID}}/$AWS_ACCOUNT_ID/g" ecr-credential-helper-role.json
+
     "$SED_CMD" -i "s/{{EKS_CLUSTER_ID}}/$EKS_CLUSTER_ID/g" ecr-webhook-role.json
     "$SED_CMD" -i "s/{{EKS_CLUSTER_ID}}/$EKS_CLUSTER_ID/g" ecr-credential-helper-role.json
 
