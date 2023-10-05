@@ -39,16 +39,8 @@ jobs:
       - name: Checkout
         uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac # v4.0.0
 
-      - name: Setup Go
-        uses: defenseunicorns/zarf/.github/actions/golang@main
-
-      # TODO: Use setup-zarf github action once Zarf v0.30.0 is released
       - name: Install latest version of Zarf
-        run: |
-          sudo curl -sL "https://github.com/defenseunicorns/zarf/releases/download/v0.30.0-rc2/zarf_v0.30.0-rc2_Linux_amd64" -o /usr/local/bin/zarf
-          sudo chmod +x /usr/local/bin/zarf
-          mkdir -p "$GITHUB_WORKSPACE/build"
-          sudo cp /usr/local/bin/zarf "$GITHUB_WORKSPACE/build"
+        uses: defenseunicorns/setup-zarf@main
 
       - name: Build AWS init package
         run: make aws-init-package
@@ -85,15 +77,12 @@ jobs:
           aws-region: us-east-1
           role-duration-seconds: 14400
 
-      # - name: Install latest version of Zarf
-      #   uses: defenseunicorns/setup-zarf@main
-
-      - name: Make Zarf executable
-        run: chmod +x build/zarf
+      - name: Install latest version of Zarf
+        uses: defenseunicorns/setup-zarf@main
 
       - name: Deploy EKS package
         run: |
-          ./build/zarf package deploy build/zarf-package-distro-eks-multi-0.0.3.tar.zst \
+          zarf package deploy build/zarf-package-distro-eks-multi-0.0.3.tar.zst \
             --components=deploy-eks-cluster \
             --set=EKS_CLUSTER_NAME=${{ inputs.cluster_name_private || 'zarf-init-aws-private-test' }} \
             --set=EKS_INSTANCE_TYPE=${{ inputs.instance_type }} \
@@ -113,23 +102,23 @@ jobs:
           REGISTRY_URL="${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
           ECR_AUTH_TOKEN=$(aws ecr get-login-password --region "${AWS_REGION}")
           
-          ./build/zarf init \
-              --registry-url="${REGISTRY_URL}" \
-              --registry-push-username="AWS" \
-              --registry-push-password="${ECR_AUTH_TOKEN}" \
-              --set=REGISTRY_TYPE="${REGISTRY_TYPE}" \
-              --set=AWS_REGION="${AWS_REGION}" \
-              --set=ECR_HOOK_ROLE_ARN=${{ steps.iam-create.outputs.ecr-webhook-role-arn }} \
-              --set=ECR_CREDENTIAL_HELPER_ROLE_ARN=${{ steps.iam-create.outputs.ecr-credential-helper-role-arn }} \
-              --components="zarf-ecr-credential-helper" \
-              -a amd64 \
-              -l debug \
-              --confirm
+          zarf init \
+            --registry-url="${REGISTRY_URL}" \
+            --registry-push-username="AWS" \
+            --registry-push-password="${ECR_AUTH_TOKEN}" \
+            --set=REGISTRY_TYPE="${REGISTRY_TYPE}" \
+            --set=AWS_REGION="${AWS_REGION}" \
+            --set=ECR_HOOK_ROLE_ARN=${{ steps.iam-create.outputs.ecr-webhook-role-arn }} \
+            --set=ECR_CREDENTIAL_HELPER_ROLE_ARN=${{ steps.iam-create.outputs.ecr-credential-helper-role-arn }} \
+            --components="zarf-ecr-credential-helper" \
+            -a amd64 \
+            -l debug \
+            --confirm
 
       - name: Teardown the cluster
         if: always()
         run: |
-          ./build/zarf package deploy build/zarf-package-distro-eks-multi-0.0.3.tar.zst \
+          zarf package deploy build/zarf-package-distro-eks-multi-0.0.3.tar.zst \
             --components=teardown-eks-cluster \
             --set=EKS_CLUSTER_NAME=${{ inputs.cluster_name_private || 'zarf-init-aws-private-test' }} \
             --confirm
@@ -181,15 +170,12 @@ jobs:
           aws-region: us-east-1
           role-duration-seconds: 14400
 
-      # - name: Install latest version of Zarf
-      #   uses: defenseunicorns/setup-zarf@main
-
-      - name: Make Zarf executable
-        run: chmod +x build/zarf
+      - name: Install latest version of Zarf
+        uses: defenseunicorns/setup-zarf@main
 
       - name: Deploy EKS package
         run: |
-          ./build/zarf package deploy build/zarf-package-distro-eks-multi-0.0.3.tar.zst \
+          zarf package deploy build/zarf-package-distro-eks-multi-0.0.3.tar.zst \
             --components=deploy-eks-cluster \
             --set=EKS_CLUSTER_NAME=${{ inputs.cluster_name_public || 'zarf-init-aws-public-test' }} \
             --set=EKS_INSTANCE_TYPE=${{ inputs.instance_type }} \
@@ -209,23 +195,23 @@ jobs:
           REGISTRY_URL=$(aws ecr-public describe-registries --query 'registries[0].registryUri' --output text)
           ECR_AUTH_TOKEN=$(aws ecr-public get-login-password --region "${AWS_REGION}")
           
-          ./build/zarf init \
-              --registry-url="${REGISTRY_URL}" \
-              --registry-push-username="AWS" \
-              --registry-push-password="${ECR_AUTH_TOKEN}" \
-              --set=REGISTRY_TYPE="${REGISTRY_TYPE}" \
-              --set=AWS_REGION="${AWS_REGION}" \
-              --set=ECR_HOOK_ROLE_ARN=${{ steps.iam-create.outputs.ecr-webhook-role-arn }} \
-              --set=ECR_CREDENTIAL_HELPER_ROLE_ARN=${{ steps.iam-create.outputs.ecr-credential-helper-role-arn }} \
-              --components="zarf-ecr-credential-helper" \
-              -a amd64 \
-              -l debug \
-              --confirm
+          zarf init \
+            --registry-url="${REGISTRY_URL}" \
+            --registry-push-username="AWS" \
+            --registry-push-password="${ECR_AUTH_TOKEN}" \
+            --set=REGISTRY_TYPE="${REGISTRY_TYPE}" \
+            --set=AWS_REGION="${AWS_REGION}" \
+            --set=ECR_HOOK_ROLE_ARN=${{ steps.iam-create.outputs.ecr-webhook-role-arn }} \
+            --set=ECR_CREDENTIAL_HELPER_ROLE_ARN=${{ steps.iam-create.outputs.ecr-credential-helper-role-arn }} \
+            --components="zarf-ecr-credential-helper" \
+            -a amd64 \
+            -l debug \
+            --confirm
 
       - name: Teardown the cluster
         if: always()
         run: |
-          ./build/zarf package deploy build/zarf-package-distro-eks-multi-0.0.3.tar.zst \
+          zarf package deploy build/zarf-package-distro-eks-multi-0.0.3.tar.zst \
             --components=teardown-eks-cluster \
             --set=EKS_CLUSTER_NAME=${{ inputs.cluster_name_public || 'zarf-init-aws-public-test' }} \
             --confirm
