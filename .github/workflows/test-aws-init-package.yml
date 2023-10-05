@@ -94,6 +94,7 @@ jobs:
         run: ./iam.sh create ${{ inputs.cluster_name_private || 'zarf-init-aws-private-test' }}
 
       - name: Zarf init with private ECR registry
+        working-directory: build
         run: |
           REGISTRY_TYPE="private"
           AWS_REGION="us-east-1"
@@ -187,6 +188,7 @@ jobs:
         run: ./iam.sh create ${{ inputs.cluster_name_public || 'zarf-init-aws-public-test' }}
 
       - name: Zarf init with public ECR registry
+        working-directory: build
         run: |
           REGISTRY_TYPE="public"
           AWS_REGION="us-east-1"
