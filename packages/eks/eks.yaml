@@ -6,6 +6,7 @@ metadata:
   region: "###ZARF_VAR_EKS_CLUSTER_REGION###"
   version: "###ZARF_VAR_EKS_CLUSTER_VERSION###"
 
+# Specify AZs to avoid insufficient capacity error in us-east-1e AZ: https://github.com/eksctl-io/eksctl/issues/3816
 availabilityZones:
   - us-east-1a
   - us-east-1d
