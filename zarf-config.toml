@@ -7,7 +7,7 @@ pepr_image_tag = 'v0.13.3'
 # The image reference to use for the Zarf agent, defaults to a locally built image
 agent_image_domain = 'ghcr.io/'
 agent_image = 'defenseunicorns/zarf/agent'
-agent_image_tag = 'v0.29.2'
+agent_image_tag = 'v0.30.0'
 
 registry_image_domain = ''
 registry_image = ''

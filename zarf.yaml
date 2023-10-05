@@ -60,13 +60,8 @@ components:
   - name: zarf-agent
     required: true
     import:
-      path: packages/zarf-agent
+      url: oci://ghcr.io/defenseunicorns/packages/init:v0.30.0-skeleton
       name: zarf-agent
-      # PR to allow importing zarf-agent component from published skeleton init package: https://github.com/defenseunicorns/zarf/pull/2025
-      # TODO: when the above PR is merged, update to import component from published skeleton package,
-      # and remove the "packages/zarf-agent" directory.
-      # url: oci://ghcr.io/defenseunicorns/packages/init:v0.29.2-skeleton
-      # name: zarf-agent
 
   - name: zarf-ecr-credential-helper
     description: "CronJob that updates Zarf image pull secrets with new ECR tokens"
