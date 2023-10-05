@@ -6,6 +6,10 @@ metadata:
   region: "###ZARF_VAR_EKS_CLUSTER_REGION###"
   version: "###ZARF_VAR_EKS_CLUSTER_VERSION###"
 
+availabilityZones:
+  - us-east-1a
+  - us-east-1d
+
 iam:
   withOIDC: true
 
