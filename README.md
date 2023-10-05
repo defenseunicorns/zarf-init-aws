@@ -21,6 +21,9 @@ This repository contains the Zarf init package for AWS that uses the [Amazon Ela
 
 ### Prerequisites
 
+- Zarf (version >= `v0.30.0`)
+  - <https://docs.zarf.dev/docs/getting-started>
+
 - Connection to an existing EKS cluster configured with an IAM OIDC identity provider to allow [IRSA](https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html) authentication
   - <https://docs.aws.amazon.com/eks/latest/userguide/enable-iam-roles-for-service-accounts.html>
 
