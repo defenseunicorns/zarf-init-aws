@@ -37,20 +37,12 @@ test-capability: ## Test the ECR Pepr capability
 	npm run unit-test
 
 # Note: the path to the main.go file is not used due to https://github.com/golang/go/issues/51831#issuecomment-1074188363
-
 build-credential-helper-amd: ## Build the ECR credential helper binary for Linux on AMD64
 	cd credential-helper && \
 	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="$(BUILD_ARGS)" -o ../build/zarf-ecr-credential-helper
 
-# INTERNAL: a shim used to build the agent image only if needed on Windows using the `test` command
-init-package-local-agent:
-	@test "$(AGENT_IMAGE_TAG)" != "local" || $(MAKE) build-local-agent-image
-
-build-local-agent-image: ## Build the Zarf agent image to be used in a locally built init package
-	docker buildx build --load --platform linux/$(ARCH) --tag ghcr.io/defenseunicorns/zarf/agent:local .
-
-aws-init-package: ## Build the AWS zarf init package
+aws-init-package: ## Build the AWS Zarf init package
 	zarf package create -o build -a $(ARCH) --confirm .
 
-eks-package: ## Build the eks package
+eks-package: ## Build the EKS package
 	zarf package create packages/eks -o build --confirm
