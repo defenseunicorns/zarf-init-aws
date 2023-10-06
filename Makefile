@@ -27,12 +27,15 @@ destroy: ## Run `zarf destroy` on the current cluster
 delete-packages: ## Delete all Zarf package tarballs in the project recursively
 	find . -type f -name 'zarf-package-*' -delete
 
-build-capability: ## Build the ECR Pepr capability
+build-module: ## Build the ECR Pepr module
 	npm ci
 	npm run build
 	cp ./dist/pepr-module-b95dbd80-e078-5eb9-aaf3-bcb9567417d0.yaml ./manifests/
 
-test-capability: ## Test the ECR Pepr capability
+format-module: ## Format the ECR Pepr module
+	npx pepr format
+
+test-module: ## Test the ECR Pepr module
 	npm ci
 	npm run unit-test
 

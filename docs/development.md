@@ -7,11 +7,17 @@
 When making changes to the Pepr *.ts files are made, you can run the unit tests locally to test your changes:
 
 ```bash
-make test-capability
+make test-module
+```
+
+## Format the Pepr module
+
+```bash
+make format-module
 ```
 
 ## Rebuild the Pepr module
 
 ```bash
-make build-capability
+make build-module
 ```

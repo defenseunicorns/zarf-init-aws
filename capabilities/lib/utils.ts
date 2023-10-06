@@ -9,7 +9,7 @@ interface ECRCheckResult {
 }
 
 export async function isECRregistry(): Promise<ECRCheckResult> {
-  let zarfState: ZarfState
+  let zarfState: ZarfState;
 
   // Fetch the Zarf state secret
   try {
