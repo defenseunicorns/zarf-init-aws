@@ -2,7 +2,7 @@
 # The image reference to use for the Pepr controller
 pepr_image_domain = 'ghcr.io'
 pepr_image = 'defenseunicorns/pepr/controller'
-pepr_image_tag = 'v0.13.3'
+pepr_image_tag = 'v0.14.0'
 
 # The image reference to use for the Zarf agent, defaults to a locally built image
 agent_image_domain = 'ghcr.io/'

@@ -1,4 +1,4 @@
-import { getAccountId, getRepositoryNames } from "./ecr";
+import { getAccountId, getRepositoryNames } from "./utils";
 
 describe("getRepositoryNames", () => {
   it("correctly extracts repository name from different input images", () => {

@@ -1,15 +1,7 @@
-import { Capability, Log, a, k8s } from "pepr";
-
-import {
-  isECRregistry,
-  getRepositoryNames,
-  getAccountId,
-  ECRProviderImpl,
-  ECRPublicProviderImpl,
-  privateECR,
-  publicECR,
-} from "./ecr";
-
+import { Capability, Log, a, K8s, kind } from "pepr";
+import { isECRregistry, getAccountId, getRepositoryNames } from "./lib/utils";
+import { ECRPublic, publicECRURLPattern } from "./ecr-public";
+import { ECRPrivate, privateECRURLPattern } from "./ecr-private";
 import {
   DeployedPackage,
   DeployedComponent,
@@ -33,7 +25,7 @@ When(a.Secret)
   .IsCreatedOrUpdated()
   .InNamespace("zarf")
   .WithLabel("package-deploy-info")
-  .Mutate(async request => {
+  .Watch(async secret => {
     const result = await isECRregistry();
 
     if (!result.isECR) {
@@ -44,8 +36,6 @@ When(a.Secret)
       );
     }
 
-    const secret = request.Raw;
-    let secretData: DeployedPackage;
     let secretString: string;
     let manuallyDecoded = false;
 
@@ -57,15 +47,10 @@ When(a.Secret)
       secretString = secret.data.data;
     }
 
-    // Parse the secret object
-    try {
-      secretData = JSON.parse(secretString);
-    } catch (err) {
-      throw new Error("Failed to parse the secret.data.data: " + err);
-    }
+    const deployedPackage: DeployedPackage = JSON.parse(secretString);
 
-    for (const deployedComponent of secretData?.deployedComponents ?? []) {
-      for (const component of secretData?.data.components ?? []) {
+    for (const deployedComponent of deployedPackage.deployedComponents) {
+      for (const component of deployedPackage.data.components) {
         if (
           deployedComponent.name === component.name &&
           deployedComponent.status === "Deploying" &&
@@ -78,12 +63,14 @@ When(a.Secret)
           );
 
           const componentWebhook =
-            secretData.componentWebhooks?.[deployedComponent?.name]?.[
+            deployedPackage.componentWebhooks?.[deployedComponent.name]?.[
               webhookName
             ];
 
           // Check if the component has a webhook running for the current package generation
-          if (componentWebhook?.observedGeneration === secretData.generation) {
+          if (
+            componentWebhook.observedGeneration === deployedPackage.generation
+          ) {
             Log.debug(
               "The component " +
                 deployedComponent.name +
@@ -91,16 +78,16 @@ When(a.Secret)
             );
           } else {
             // Seed the componentWebhooks map/object
-            if (!secretData.componentWebhooks) {
-              secretData.componentWebhooks = {};
+            if (!deployedPackage.componentWebhooks) {
+              deployedPackage.componentWebhooks = {};
             }
 
             // Update the secret noting that the webhook is running for this component
-            secretData.componentWebhooks[deployedComponent.name] = {
+            deployedPackage.componentWebhooks[deployedComponent.name] = {
               "ecr-webhook": {
                 name: webhookName,
                 status: "Running",
-                observedGeneration: secretData.generation,
+                observedGeneration: deployedPackage.generation,
               },
             };
 
@@ -116,9 +103,9 @@ When(a.Secret)
     }
 
     if (manuallyDecoded === true) {
-      secret.data.data = btoa(JSON.stringify(secretData));
+      secret.data.data = btoa(JSON.stringify(deployedPackage));
     } else {
-      secret.data.data = JSON.stringify(secretData);
+      secret.data.data = JSON.stringify(deployedPackage);
     }
   });
 
@@ -168,17 +155,17 @@ async function createRepos(
   const region = process.env.AWS_REGION;
 
   // Create repositories for private ECR registry
-  if (privateECR.test(registryURL)) {
+  if (privateECRURLPattern.test(registryURL)) {
     const accountId = getAccountId(registryURL);
-    const ecr = new ECRProviderImpl(region);
+    const ecrPrivate = new ECRPrivate(region);
 
     Log.info("Attempting to create ECR repositories");
-    await ecr.createRepositories(repoNames, accountId);
+    await ecrPrivate.createRepositories(repoNames, accountId);
   }
 
   // Create repositories for public ECR registry
-  if (publicECR.test(registryURL)) {
-    const ecrPublic = new ECRPublicProviderImpl(region);
+  if (publicECRURLPattern.test(registryURL)) {
+    const ecrPublic = new ECRPublic(region);
 
     Log.info("Attempting to create ECR repositories");
     await ecrPublic.createRepositories(repoNames);
@@ -191,51 +178,49 @@ async function updateWebhookStatus(
   componentName: string,
   status: string,
 ): Promise<void> {
-  // Configure the k8s api client
-  const kc = new k8s.KubeConfig();
-  kc.loadFromDefault();
-  const k8sCoreApi = kc.makeApiClient(k8s.CoreV1Api);
+  const ns = "zarf";
 
+  let secret: a.Secret;
+  let secretString: string;
+  let deployedPackage: DeployedPackage;
+
+  // Fetch the package secret
   try {
-    const response = await k8sCoreApi.readNamespacedSecret(secretName, "zarf");
-    const v1Secret = response.body;
-
-    const secretString = atob(v1Secret.data.data);
-    const secretData = JSON.parse(secretString);
-
-    // Update the webhook status if the observedGeneration matches
-    const componentWebhook =
-      secretData.componentWebhooks[componentName]?.[webhookName];
-
-    if (componentWebhook?.observedGeneration === secretData.generation) {
-      componentWebhook.status = status;
-      secretData.componentWebhooks[componentName][webhookName] =
-        componentWebhook;
-    }
-
-    v1Secret.data.data = btoa(JSON.stringify(secretData));
-
-    // Patch the secret back to the cluster
-    await k8sCoreApi.patchNamespacedSecret(
-      secretName,
-      "zarf",
-      v1Secret,
-      undefined,
-      undefined,
-      undefined,
-      undefined,
-      undefined,
-      {
-        headers: {
-          "Content-Type": "application/strategic-merge-patch+json",
-        },
-      },
-    );
+    secret = await K8s(kind.Secret).InNamespace(ns).Get(secretName);
+    secretString = atob(secret.data.data);
+    deployedPackage = JSON.parse(secretString);
   } catch (err) {
     Log.error(
-      `Unable to update the package secret webhook status: ${JSON.stringify(
-        err,
-      )}`,
+      `Error: Failed to get package secret '${secretName}' in namespace '${ns}': ${err}`,
+    );
+  }
+
+  const componentWebhook =
+    deployedPackage.componentWebhooks[componentName]?.[webhookName];
+
+  // Update the webhook status if the observedGeneration matches
+  if (componentWebhook?.observedGeneration === deployedPackage.generation) {
+    componentWebhook.status = status;
+    deployedPackage.componentWebhooks[componentName][webhookName] =
+      componentWebhook;
+  }
+
+  // Update the package secret
+  try {
+    secret.data.data = btoa(JSON.stringify(deployedPackage));
+
+    await K8s(kind.Secret).Apply({
+      metadata: {
+        name: secretName,
+        namespace: ns,
+      },
+      data: {
+        data: secret.data.data,
+      },
+    });
+  } catch (err) {
+    Log.error(
+      `Error: Failed to update package secret '${secretName}' in namespace '${ns}': ${err}`,
     );
   }
 }
