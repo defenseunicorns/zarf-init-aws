@@ -40,10 +40,7 @@ components:
     actions:
       onDeploy:
         after:
-          - cmd: |
-              export REGISTRY_TYPE="$ZARF_VAR_REGISTRY_TYPE";
-              export AWS_REGION="$ZARF_VAR_AWS_REGION";
-              ./hack/ecr.sh
+          - cmd: ./hack/ecr.sh
             description: "Create ECR repository for the Pepr controller image"
 
   - name: ecr-hook
