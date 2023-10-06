@@ -1,4 +1,5 @@
 import { Capability, Log, a, K8s, kind } from "pepr";
+// import { Operation } from "fast-json-patch";
 import { isECRregistry, getAccountId, getRepositoryNames } from "./lib/utils";
 import { ECRPublic, publicECRURLPattern } from "./ecr-public";
 import { ECRPrivate, privateECRURLPattern } from "./ecr-private";
@@ -25,17 +26,19 @@ When(a.Secret)
   .IsCreatedOrUpdated()
   .InNamespace("zarf")
   .WithLabel("package-deploy-info")
-  .Watch(async secret => {
+  .Mutate(async request => {
     const result = await isECRregistry();
 
     if (!result.isECR) {
-      throw new Error(
+      Log.error(
         "A valid ECR URL was not found in the Zarf state secret: '" +
           result.registryURL +
           "'\nPlease provide a valid ECR registry URL.\nExample: '123456789012.dkr.ecr.us-east-1.amazonaws.com'",
       );
     }
 
+    const secret = request.Raw;
+    let deployedPackage: DeployedPackage;
     let secretString: string;
     let manuallyDecoded = false;
 
@@ -47,7 +50,12 @@ When(a.Secret)
       secretString = secret.data.data;
     }
 
-    const deployedPackage: DeployedPackage = JSON.parse(secretString);
+    // Parse the secret object
+    try {
+      deployedPackage = JSON.parse(secretString);
+    } catch (err) {
+      Log.error(`Failed to parse the secret data: ${err.message}`);
+    }
 
     for (const deployedComponent of deployedPackage.deployedComponents) {
       for (const component of deployedPackage.data.components) {
@@ -69,7 +77,7 @@ When(a.Secret)
 
           // Check if the component has a webhook running for the current package generation
           if (
-            componentWebhook.observedGeneration === deployedPackage.generation
+            componentWebhook?.observedGeneration === deployedPackage.generation
           ) {
             Log.debug(
               "The component " +
@@ -183,16 +191,29 @@ async function updateWebhookStatus(
   let secret: a.Secret;
   let secretString: string;
   let deployedPackage: DeployedPackage;
+  let manuallyDecoded = false;
 
   // Fetch the package secret
   try {
     secret = await K8s(kind.Secret).InNamespace(ns).Get(secretName);
-    secretString = atob(secret.data.data);
-    deployedPackage = JSON.parse(secretString);
   } catch (err) {
     Log.error(
-      `Error: Failed to get package secret '${secretName}' in namespace '${ns}': ${err}`,
+      `Error: Failed to get package secret '${secretName}' in namespace '${ns}': ${err.message}`,
     );
+  }
+
+  try {
+    secretString = atob(secret.data.data);
+    manuallyDecoded = true;
+  } catch (err) {
+    secretString = secret.data.data;
+  }
+
+  // Parse the secret object
+  try {
+    deployedPackage = JSON.parse(secretString);
+  } catch (err) {
+    Log.error(`Failed to parse the secret data: ${err.message}`);
   }
 
   const componentWebhook =
@@ -205,10 +226,19 @@ async function updateWebhookStatus(
       componentWebhook;
   }
 
-  // Update the package secret
-  try {
+  if (manuallyDecoded === true) {
     secret.data.data = btoa(JSON.stringify(deployedPackage));
+  } else {
+    secret.data.data = JSON.stringify(deployedPackage);
+  }
 
+  // const patchOperations: Operation[] = [
+  //   { op: "replace", path: "/data/data", value: secret.data.data },
+  // ];
+
+  // await K8s(kind.Secret).Patch(patchOperations);
+
+  try {
     await K8s(kind.Secret).Apply({
       metadata: {
         name: secretName,
@@ -220,7 +250,7 @@ async function updateWebhookStatus(
     });
   } catch (err) {
     Log.error(
-      `Error: Failed to update package secret '${secretName}' in namespace '${ns}': ${err}`,
+      `Error: Failed to update package secret '${secretName}' in namespace '${ns}'`,
     );
   }
 }
