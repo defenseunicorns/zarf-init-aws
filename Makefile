@@ -28,7 +28,6 @@ delete-packages: ## Delete all Zarf package tarballs in the project recursively
 	find . -type f -name 'zarf-package-*' -delete
 
 build-module: ## Build the ECR Pepr module
-	npm ci
 	npm run build
 	cp ./dist/pepr-module-b95dbd80-e078-5eb9-aaf3-bcb9567417d0.yaml ./manifests/
 
@@ -36,7 +35,6 @@ format-module: ## Format the ECR Pepr module
 	npx pepr format
 
 test-module: ## Test the ECR Pepr module
-	npm ci
 	npm run unit-test
 
 # Note: the path to the main.go file is not used due to https://github.com/golang/go/issues/51831#issuecomment-1074188363
