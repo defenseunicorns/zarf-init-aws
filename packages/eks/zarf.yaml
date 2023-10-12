@@ -57,10 +57,6 @@ components:
           - cmd: sleep 15
           - cmd: ./binaries/eksctl_$(uname -s)_$(uname -m) create cluster -f eks.yaml
           - cmd: ./binaries/eksctl_$(uname -s)_$(uname -m) utils write-kubeconfig -c ${ZARF_VAR_EKS_CLUSTER_NAME}
-
-  - name: teardown-eks-cluster
-    description: Delete the EKS cluster that this package was used to create
-    actions:
       onRemove:
         before:
           - cmd: ./binaries/eksctl_$(uname -s)_$(uname -m) delete cluster -f eks.yaml --disable-nodegroup-eviction --wait

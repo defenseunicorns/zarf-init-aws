@@ -1,8 +1,8 @@
 kind: ZarfInitConfig
 metadata:
-  name: ecr-hook
-  description: 'Pepr Module: Use ECR as an external Zarf registry'
-  url: https://github.com/defenseunicorns/pepr
+  name: init-aws
+  description: "Zarf Init Package that uses ECR as an external Zarf registry"
+  url: https://github.com/defenseunicorns/zarf-init-aws
   version: 0.0.1
 
 constants:

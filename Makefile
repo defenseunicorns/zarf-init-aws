@@ -45,13 +45,13 @@ eks-package: ## Build the EKS package
 	zarf package create packages/eks -o build --confirm
 
 create-iam: ## Create AWS IAM policies and roles used in CI
-	cd infra/iam || exit \
+	cd iam || exit \
 	&& pulumi logout \
 	&& pulumi login --local \
 	&& PULUMI_CONFIG_PASSPHRASE="" pulumi stack init ci \
 	&& PULUMI_CONFIG_PASSPHRASE="" CLUSTER_NAME="$(CLUSTER_NAME)" pulumi up --yes
 
 delete-iam: ## Delete AWS IAM policies and roles used in CI
-	cd infra/iam || exit \
+	cd iam || exit \
 	&& PULUMI_CONFIG_PASSPHRASE="" pulumi down --yes \
 	&& PULUMI_CONFIG_PASSPHRASE="" pulumi stack rm ci --yes

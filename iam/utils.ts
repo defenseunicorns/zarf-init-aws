@@ -6,7 +6,7 @@ import { join } from "path";
 export function createPolicy(file: string, policyName: string) {
   const policy = readFile(file);
   return new iam.Policy(policyName, {
-    policy: policy,
+    policy: policy
   });
 }
 

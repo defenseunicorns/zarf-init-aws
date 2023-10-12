@@ -91,10 +91,10 @@ jobs:
         with:
           node-version: 18
           cache: "npm"
-          cache-dependency-path: "infra/iam/package-lock.json"
+          cache-dependency-path: "iam/package-lock.json"
 
       - name: Install Node dependencies
-        working-directory: infra/iam
+        working-directory: iam
         run: npm ci
 
       - name: Deploy EKS package
@@ -110,7 +110,7 @@ jobs:
         run: |
           make create-iam CLUSTER_NAME="$CLUSTER_NAME"
 
-          cd infra/iam || exit
+          cd iam || exit
           echo "ecr-webhook-role-arn=$(pulumi stack output webhookRoleArn)" >> "$GITHUB_OUTPUT"
           echo "ecr-credential-helper-role-arn=$(pulumi stack output credentialHelperRoleArn)" >> "$GITHUB_OUTPUT"
 
@@ -201,10 +201,10 @@ jobs:
         with:
           node-version: 18
           cache: "npm"
-          cache-dependency-path: "infra/iam/package-lock.json"
+          cache-dependency-path: "iam/package-lock.json"
 
       - name: Install Node dependencies
-        working-directory: infra/iam
+        working-directory: iam
         run: npm ci
 
       - name: Deploy EKS package
@@ -220,7 +220,7 @@ jobs:
         run: |
           make create-iam CLUSTER_NAME="$CLUSTER_NAME"
 
-          cd infra/iam || exit
+          cd iam || exit
           echo "ecr-webhook-role-arn=$(pulumi stack output webhookRoleArn)" >> "$GITHUB_OUTPUT"
           echo "ecr-credential-helper-role-arn=$(pulumi stack output credentialHelperRoleArn)" >> "$GITHUB_OUTPUT"
 
