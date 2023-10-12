@@ -86,6 +86,17 @@ jobs:
       - name: Install Pulumi
         run: curl -fsSL https://get.pulumi.com | sh
 
+      - name: Setup NodeJS
+        uses: actions/setup-node@5e21ff4d9bc1a8cf6de233a3057d20ec6b3fb69d # v3.8.1
+        with:
+          node-version: 18
+          cache: "npm"
+          cache-dependency-path: "infra/iam/package-lock.json"
+
+      - name: Install Node dependencies
+        working-directory: infra/iam
+        run: npm ci
+
       - name: Deploy EKS package
         run: |
           zarf package deploy build/zarf-package-distro-eks-multi-0.0.3.tar.zst \
@@ -188,6 +199,17 @@ jobs:
 
       - name: Install Pulumi
         run: curl -fsSL https://get.pulumi.com | sh
+
+      - name: Setup NodeJS
+        uses: actions/setup-node@5e21ff4d9bc1a8cf6de233a3057d20ec6b3fb69d # v3.8.1
+        with:
+          node-version: 18
+          cache: "npm"
+          cache-dependency-path: "infra/iam/package-lock.json"
+
+      - name: Install Node dependencies
+        working-directory: infra/iam
+        run: npm ci
 
       - name: Deploy EKS package
         run: |
