@@ -99,7 +99,7 @@ jobs:
 
       - name: Deploy EKS package
         run: |
-          zarf package deploy build/zarf-package-distro-eks-multi-0.0.3.tar.zst \
+          zarf package deploy build/zarf-package-distro-eks-multi-0.0.4.tar.zst \
             --components=deploy-eks-cluster \
             --set=EKS_CLUSTER_NAME="$CLUSTER_NAME" \
             --set=EKS_INSTANCE_TYPE=${{ inputs.instance_type }} \
@@ -209,7 +209,7 @@ jobs:
 
       - name: Deploy EKS package
         run: |
-          zarf package deploy build/zarf-package-distro-eks-multi-0.0.3.tar.zst \
+          zarf package deploy build/zarf-package-distro-eks-multi-0.0.4.tar.zst \
             --components=deploy-eks-cluster \
             --set=EKS_CLUSTER_NAME="$CLUSTER_NAME" \
             --set=EKS_INSTANCE_TYPE=${{ inputs.instance_type }} \
