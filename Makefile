@@ -3,13 +3,9 @@
 
 # Provide a default value for the operating system architecture used in tests, e.g. " APPLIANCE_MODE=true|false make test-e2e ARCH=arm64"
 ARCH ?= amd64
-KEY ?= ""
+CLUSTER_NAME ?= ""
 ######################################################################################
 
-CLI_VERSION ?= $(if $(shell git describe --tags),$(shell git describe --tags),"UnknownVersion")
-GIT_SHA := $(if $(shell git rev-parse HEAD),$(shell git rev-parse HEAD),"")
-BUILD_DATE := $(shell date -u +'%Y-%m-%dT%H:%M:%SZ')
-BUILD_ARGS := -s -w -X 'github.com/defenseunicorns/zarf/src/config.CLIVersion=$(CLI_VERSION)' -X 'k8s.io/component-base/version.gitVersion=v0.0.0+zarf$(CLI_VERSION)' -X 'k8s.io/component-base/version.gitCommit=$(GIT_SHA)' -X 'k8s.io/component-base/version.buildDate=$(BUILD_DATE)'
 .DEFAULT_GOAL := help
 
 .PHONY: help
@@ -47,3 +43,15 @@ aws-init-package: ## Build the AWS Zarf init package
 
 eks-package: ## Build the EKS package
 	zarf package create packages/eks -o build --confirm
+
+create-iam: ## Create AWS IAM policies and roles used in CI
+	cd infra/iam || exit \
+	&& pulumi logout \
+	&& pulumi login --local \
+	&& PULUMI_CONFIG_PASSPHRASE="" pulumi stack init ci \
+	&& PULUMI_CONFIG_PASSPHRASE="" CLUSTER_NAME="$(CLUSTER_NAME)" pulumi up --yes
+
+delete-iam: ## Delete AWS IAM policies and roles used in CI
+	cd infra/iam || exit \
+	&& PULUMI_CONFIG_PASSPHRASE="" pulumi down --yes \
+	&& PULUMI_CONFIG_PASSPHRASE="" pulumi stack rm ci --yes
