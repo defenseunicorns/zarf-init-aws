@@ -3,7 +3,7 @@ metadata:
   name: distro-eks
   description: Deploy a EKS K8s cluster
   architecture: multi
-  version: 0.0.3
+  version: 0.0.4
 
 variables:
   - name: EKS_CLUSTER_NAME
@@ -59,9 +59,9 @@ components:
           - cmd: ./binaries/eksctl_$(uname -s)_$(uname -m) utils write-kubeconfig -c ${ZARF_VAR_EKS_CLUSTER_NAME}
 
   - name: teardown-eks-cluster
-    description: Delete the EKS cluster that this package was used to create.
+    description: Delete the EKS cluster that this package was used to create
     actions:
-      onDeploy:
+      onRemove:
         before:
           - cmd: ./binaries/eksctl_$(uname -s)_$(uname -m) delete cluster -f eks.yaml --disable-nodegroup-eviction --wait
         after:
