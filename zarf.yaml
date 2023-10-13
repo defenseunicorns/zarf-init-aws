@@ -62,7 +62,6 @@ components:
 
   - name: zarf-ecr-credential-helper
     description: "CronJob that updates Zarf image pull secrets with new ECR tokens"
-    required: false
     manifests:
       - name: zarf-ecr-credential-helper
         namespace: zarf
@@ -70,3 +69,9 @@ components:
           - manifests/zarf-ecr-credential-helper.yaml
     images:
       - lucasrod96/zarf-ecr-credential-helper:v0.0.1
+
+  # (Optional) Adds a git server to the cluster
+  - name: git-server
+    import:
+      url: oci://ghcr.io/defenseunicorns/packages/init:v0.30.0-skeleton
+      name: git-server
