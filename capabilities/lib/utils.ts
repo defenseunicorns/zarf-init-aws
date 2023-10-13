@@ -46,8 +46,10 @@ export function getRepositoryNames(images: string[]): string[] {
   }
 
   const repoNames = images.map((image: string) => {
-    if (image.includes(":")) {
+    if (image.includes(":") && !image.includes("@sha256")) {
       image = image.split(":")[0];
+    } else if (image.includes("@sha256")) {
+      image = image.split("@sha256")[0];
     }
 
     const firstSlashIndex = image.indexOf("/");

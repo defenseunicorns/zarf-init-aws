@@ -27,6 +27,11 @@ describe("getRepositoryNames", () => {
         input: "registry1.dso.mil/defenseunicorns/zarf/agent:latest",
         expected: "defenseunicorns/zarf/agent",
       },
+      {
+        input:
+          "defenseunicorns/zarf-game@sha256:f78e442f0f3eb3e9459b5ae6b1a8fda62f8dfe818112e7d130a4e8ae72b3cbff",
+        expected: "defenseunicorns/zarf-game",
+      },
     ];
 
     testCases.forEach(({ input, expected }) => {
