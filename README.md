@@ -1,7 +1,6 @@
 # Zarf Init Package for AWS - DevSecOps for Air Gap
 
 [![Latest Release](https://img.shields.io/github/v/release/defenseunicorns/zarf-init-aws)](https://github.com/defenseunicorns/zarf-init-aws/releases)
-[![Go version](https://img.shields.io/github/go-mod/go-version/defenseunicorns/zarf-init-aws?filename=go.mod)](https://go.dev/)
 [![Build Status](https://img.shields.io/github/actions/workflow/status/defenseunicorns/zarf-init-aws/release.yml)](https://github.com/defenseunicorns/zarf-init-aws/actions/workflows/release.yml)
 [![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/defenseunicorns/zarf-init-aws/badge)](https://api.securityscorecards.dev/projects/github.com/defenseunicorns/zarf-init-aws)
 
