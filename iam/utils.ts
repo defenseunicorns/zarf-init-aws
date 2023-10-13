@@ -1,7 +1,6 @@
 import { iam, getCallerIdentity } from "@pulumi/aws";
 import { getCluster } from "@pulumi/aws/eks";
 import { readFileSync } from "fs";
-import { join } from "path";
 
 export function createPolicy(file: string, policyName: string) {
   const policy = readFile(file);
@@ -74,5 +73,5 @@ export async function getAccountId(): Promise<string> {
 }
 
 export function readFile(filename: string): string {
-  return readFileSync(join(__dirname, filename), "utf8");
+  return readFileSync(filename, "utf8");
 }

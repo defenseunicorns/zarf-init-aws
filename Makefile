@@ -4,6 +4,8 @@
 # Provide a default value for the operating system architecture used in tests, e.g. " APPLIANCE_MODE=true|false make test-e2e ARCH=arm64"
 ARCH ?= amd64
 CLUSTER_NAME ?= ""
+INSTANCE_TYPE ?= t3.small
+EKS_PACKAGE := ./build/zarf-package-distro-eks-multi-0.0.4.tar.zst
 ######################################################################################
 
 .DEFAULT_GOAL := help
@@ -44,14 +46,38 @@ aws-init-package: ## Build the AWS Zarf init package
 eks-package: ## Build the EKS package
 	zarf package create packages/eks -o build --confirm
 
+deploy-eks-package: ## Deploy the EKS package to create an EKS cluster
+	@if [ -z "$(CLUSTER_NAME)" ]; then \
+		echo "Error: CLUSTER_NAME is not provided. Please set CLUSTER_NAME with a valid cluster name."; \
+		echo "Example: make deploy-eks-package CLUSTER_NAME=my-cluster-name"; \
+		exit 1; \
+	fi
+
+	@test -s $(EKS_PACKAGE) || { $(MAKE) eks-package; } 
+
+	zarf package deploy $(EKS_PACKAGE) \
+        --components="deploy-eks-cluster" \
+        --set=EKS_CLUSTER_NAME="$(CLUSTER_NAME)" \
+        --set=EKS_INSTANCE_TYPE="$(INSTANCE_TYPE)" \
+        --confirm
+
+remove-eks-package: ## Remove the EKS package to teardown an EKS cluster
+	zarf package remove $(EKS_PACKAGE) --confirm
+
 create-iam: ## Create AWS IAM policies and roles used in CI
-	cd iam || exit \
+	@if [ -z "$(CLUSTER_NAME)" ]; then \
+		echo "Error: CLUSTER_NAME is not provided. Please set CLUSTER_NAME with an existing EKS cluster name."; \
+		echo "Example: make create-iam CLUSTER_NAME=my-cluster-name"; \
+		exit 1; \
+	fi
+
+	@cd iam || exit \
 	&& pulumi logout \
 	&& pulumi login --local \
 	&& PULUMI_CONFIG_PASSPHRASE="" pulumi stack init ci \
 	&& PULUMI_CONFIG_PASSPHRASE="" CLUSTER_NAME="$(CLUSTER_NAME)" pulumi up --yes
 
 delete-iam: ## Delete AWS IAM policies and roles used in CI
-	cd iam || exit \
+	@cd iam || exit \
 	&& PULUMI_CONFIG_PASSPHRASE="" pulumi down --yes \
 	&& PULUMI_CONFIG_PASSPHRASE="" pulumi stack rm ci --yes

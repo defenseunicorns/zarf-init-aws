@@ -59,6 +59,7 @@ components:
           - cmd: ./binaries/eksctl_$(uname -s)_$(uname -m) utils write-kubeconfig -c ${ZARF_VAR_EKS_CLUSTER_NAME}
       onRemove:
         before:
+          # NOTE: This onRemove action assumes the presence of an eksctl binary in a 'binaries' directory from where 'zarf package remove' was ran.
           - cmd: ./binaries/eksctl_$(uname -s)_$(uname -m) delete cluster -f eks.yaml --disable-nodegroup-eviction --wait
         after:
           # clean up after ourselves

@@ -98,12 +98,7 @@ jobs:
         run: npm ci
 
       - name: Deploy EKS package
-        run: |
-          zarf package deploy build/zarf-package-distro-eks-multi-0.0.4.tar.zst \
-            --components=deploy-eks-cluster \
-            --set=EKS_CLUSTER_NAME="$CLUSTER_NAME" \
-            --set=EKS_INSTANCE_TYPE=${{ inputs.instance_type }} \
-            --confirm
+        run: make deploy-eks-package CLUSTER_NAME="$CLUSTER_NAME" INSTANCE_TYPE=${{ inputs.instance_type }}
 
       - name: Create IAM roles for IRSA authentication
         id: iam-create
@@ -139,7 +134,7 @@ jobs:
 
       - name: Teardown the cluster
         if: always()
-        run: zarf package remove build/zarf-package-distro-eks-multi-0.0.4.tar.zst --confirm
+        run: make remove-eks-package
 
       - name: Delete private ECR repositories
         if: always()
@@ -208,12 +203,7 @@ jobs:
         run: npm ci
 
       - name: Deploy EKS package
-        run: |
-          zarf package deploy build/zarf-package-distro-eks-multi-0.0.4.tar.zst \
-            --components=deploy-eks-cluster \
-            --set=EKS_CLUSTER_NAME="$CLUSTER_NAME" \
-            --set=EKS_INSTANCE_TYPE=${{ inputs.instance_type }} \
-            --confirm
+        run: make deploy-eks-package CLUSTER_NAME="$CLUSTER_NAME" INSTANCE_TYPE=${{ inputs.instance_type }}
 
       - name: Create IAM roles for IRSA authentication
         id: iam-create
@@ -229,11 +219,11 @@ jobs:
         run: |
           REGISTRY_TYPE="public"
           AWS_REGION="us-east-1"
-          
+
           AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query 'Account' --output text)
           REGISTRY_URL=$(aws ecr-public describe-registries --query 'registries[0].registryUri' --output text)
           ECR_AUTH_TOKEN=$(aws ecr-public get-login-password --region "${AWS_REGION}")
-          
+
           zarf init \
             --registry-url="${REGISTRY_URL}" \
             --registry-push-username="AWS" \
@@ -249,7 +239,7 @@ jobs:
 
       - name: Teardown the cluster
         if: always()
-        run: zarf package remove build/zarf-package-distro-eks-multi-0.0.4.tar.zst --confirm
+        run: make remove-eks-package
 
       - name: Delete public ECR repositories
         if: always()
