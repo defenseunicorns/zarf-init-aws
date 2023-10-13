@@ -42,6 +42,19 @@ jobs:
       - name: Install latest version of Zarf
         uses: defenseunicorns/setup-zarf@main
 
+      - name: Setup NodeJS
+        uses: actions/setup-node@5e21ff4d9bc1a8cf6de233a3057d20ec6b3fb69d # v3.8.1
+        with:
+          node-version: 18
+          cache: "npm"
+          cache-dependency-path: "package-lock.json"
+
+      - name: Install Node dependencies
+        run: npm ci
+
+      - name: Build ECR Pepr module
+        run: make build-module
+
       - name: Build AWS init package
         run: make aws-init-package
   

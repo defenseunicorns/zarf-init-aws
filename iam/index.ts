@@ -15,11 +15,17 @@ const credentialHelperRoleName = "ecr-credential-helper-role";
 const credentialHelperPolicyName = "ecr-credential-helper-policy";
 
 // File names for IAM resources
-const jsonFilesDir = join(__dirname, "json")
+const jsonFilesDir = join(__dirname, "json");
 const webhookPolicyPath = join(jsonFilesDir, "ecr-webhook-policy.json");
 const webhookRolePath = join(jsonFilesDir, "ecr-webhook-role.json");
-const credentialHelperPolicyPath = join(jsonFilesDir, "ecr-credential-helper-policy.json");
-const credentialHelperRolePath = join(jsonFilesDir, "ecr-credential-helper-role.json");
+const credentialHelperPolicyPath = join(
+  jsonFilesDir,
+  "ecr-credential-helper-policy.json",
+);
+const credentialHelperRolePath = join(
+  jsonFilesDir,
+  "ecr-credential-helper-role.json",
+);
 
 const main = async () => {
   const clusterId = await getClusterId();

@@ -1,5 +1,4 @@
 import { Capability, Log, a, K8s, kind } from "pepr";
-import { Operation } from "fast-json-patch";
 import { isECRregistry, getAccountId, getRepositoryNames } from "./lib/utils";
 import { ECRPublic, publicECRURLPattern } from "./ecr-public";
 import { ECRPrivate, privateECRURLPattern } from "./ecr-private";
@@ -234,20 +233,21 @@ async function updateWebhookStatus(
     secret.data.data = JSON.stringify(deployedPackage);
   }
 
-  // Clear managedFields to allow Pepr to take ownership of the secret data.data field and update webhook status
-  // For more information on clearing managedFields to take ownership of an object's field(s): https://kubernetes.io/docs/reference/using-api/server-side-apply/#clearing-managedfields
-  // TODO: Update to use Server-Side force apply when available in Pepr: https://github.com/defenseunicorns/kubernetes-fluent-client/issues/9
-  const patchOps: Operation[] = [
-    { op: "replace", path: "/metadata/managedFields", value: [{}] },
-    { op: "replace", path: "/data/data", value: secret.data.data },
-  ];
-
-  const kube = K8s(kind.Secret, { namespace: ns, name: secretName });
-
+  // Use Server-Side force apply to forcefully take ownership of the package secret data.data field
+  // Doing a Server-Side apply without the force option will result in a FieldManagerConflict error due to Zarf owning the object.
+  // See the following PR for more information: https://github.com/defenseunicorns/kubernetes-fluent-client/pull/20
   try {
-    await kube.Patch(patchOps);
-    Log.debug(
-      `Successfully updated package secret '${secretName}' in namespace '${ns}'`,
+    await K8s(kind.Secret).Apply(
+      {
+        metadata: {
+          name: secretName,
+          namespace: ns,
+        },
+        data: {
+          data: secret.data.data,
+        },
+      },
+      { force: true },
     );
   } catch (err) {
     Log.error(
@@ -256,22 +256,4 @@ async function updateWebhookStatus(
       )}`,
     );
   }
-
-  // try {
-  //   await K8s(kind.Secret).Apply({
-  //     metadata: {
-  //       name: secretName,
-  //       namespace: ns,
-  //     },
-  //     data: {
-  //       data: secret.data.data,
-  //     },
-  //   });
-  // } catch (err) {
-  //   Log.error(
-  //     `Error: Failed to update package secret '${secretName}' in namespace '${ns}': ${JSON.stringify(
-  //       err,
-  //     )}`,
-  //   );
-  // }
 }
