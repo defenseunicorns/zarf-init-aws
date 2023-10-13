@@ -3,6 +3,7 @@
 
 # Provide a default value for the operating system architecture used in tests, e.g. " APPLIANCE_MODE=true|false make test-e2e ARCH=arm64"
 ARCH ?= amd64
+CREDENTIAL_HELPER_BIN := ./build/zarf-ecr-credential-helper
 CLUSTER_NAME ?= ""
 INSTANCE_TYPE ?= t3.small
 EKS_PACKAGE := ./build/zarf-package-distro-eks-multi-0.0.4.tar.zst
@@ -36,9 +37,13 @@ test-module: ## Test the ECR Pepr module
 	npm run unit-test
 
 # Note: the path to the main.go file is not used due to https://github.com/golang/go/issues/51831#issuecomment-1074188363
-build-credential-helper-amd: ## Build the ECR credential helper binary for Linux on AMD64
-	cd credential-helper && \
-	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="$(BUILD_ARGS)" -o ../build/zarf-ecr-credential-helper
+build-credential-helper-linux-amd: ## Build the ECR credential helper binary for Linux on AMD64
+	cd credential-helper || exit \
+	&& CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="$(BUILD_ARGS)" -o ../build/zarf-ecr-credential-helper
+
+build-local-credential-helper-image: ## Build the ECR credential helper image to be used in a locally built init package
+	@test -s $(CREDENTIAL_HELPER_BIN) || $(MAKE) build-credential-helper-linux-amd
+	docker buildx build --load --platform linux/$(ARCH) --tag ghcr.io/defenseunicorns/zarf-init-aws/ecr-credential-helper:local .
 
 aws-init-package: ## Build the AWS Zarf init package
 	zarf package create -o build -a $(ARCH) --confirm .

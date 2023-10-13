@@ -9,6 +9,11 @@ agent_image_domain = 'ghcr.io/'
 agent_image = 'defenseunicorns/zarf/agent'
 agent_image_tag = 'v0.30.0'
 
+# The image reference to use for the ECR credential helper, defaults to a locally built image
+credential_helper_image_domain = 'ghcr.io/'
+credential_helper_image = 'defenseunicorns/zarf-init-aws/ecr-credential-helper'
+credential_helper_image_tag = 'local'
+
 registry_image_domain = ''
 registry_image = ''
 registry_image_tag = ''

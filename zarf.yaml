@@ -8,9 +8,13 @@ metadata:
 constants:
   - name: PEPR_IMAGE
     value: "###ZARF_PKG_TMPL_PEPR_IMAGE###"
-
   - name: PEPR_IMAGE_TAG
     value: "###ZARF_PKG_TMPL_PEPR_IMAGE_TAG###"
+
+  - name: CREDENTIAL_HELPER_IMAGE
+    value: "###ZARF_PKG_TMPL_CREDENTIAL_HELPER_IMAGE###"
+  - name: CREDENTIAL_HELPER_IMAGE_TAG
+    value: "###ZARF_PKG_TMPL_CREDENTIAL_HELPER_IMAGE_TAG###"
 
 variables:
   - name: REGISTRY_TYPE
@@ -67,8 +71,15 @@ components:
         namespace: zarf
         files:
           - manifests/zarf-ecr-credential-helper.yaml
+    actions:
+      onCreate:
+        before:
+          - cmd: "test \"###ZARF_PKG_TMPL_CREDENTIAL_HELPER_IMAGE_TAG###\" != \"local\" || make build-local-credential-helper-image CREDENTIAL_HELPER_IMAGE_TAG=\"###ZARF_PKG_TMPL_CREDENTIAL_HELPER_IMAGE_TAG###\" ARCH=\"###ZARF_PKG_ARCH###\""
+            shell:
+              windows: pwsh
+            description: Build the local ECR credential helper image (if 'CREDENTIAL_HELPER_IMAGE_TAG' was specified as 'local')
     images:
-      - lucasrod96/zarf-ecr-credential-helper:v0.0.1
+      - "###ZARF_PKG_TMPL_CREDENTIAL_HELPER_IMAGE_DOMAIN######ZARF_PKG_TMPL_CREDENTIAL_HELPER_IMAGE###:###ZARF_PKG_TMPL_CREDENTIAL_HELPER_IMAGE_TAG###"
 
   # (Optional) Adds a git server to the cluster
   - name: git-server
