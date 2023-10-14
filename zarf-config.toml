@@ -21,9 +21,6 @@ registry_image_domain = ''
 registry_image = ''
 registry_image_tag = ''
 
-[package.deploy]
-components = 'zarf-ecr-credential-helper'
-
 [package.deploy.set]
 aws_region = 'us-east-1'
 registry_type = ''
