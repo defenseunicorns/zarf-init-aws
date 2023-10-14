@@ -26,124 +26,94 @@ This repository contains the Zarf init package for AWS that uses the [Amazon Ela
 - Connection to an existing EKS cluster configured with an IAM OIDC identity provider to allow [IRSA](https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html) authentication
   - <https://docs.aws.amazon.com/eks/latest/userguide/enable-iam-roles-for-service-accounts.html>
 
-- AWS CLI configured with the necessary permissions to create ECR repositories and pull/push images
+- AWS CLI configured with the necessary permissions to create ECR repositories and fetch ECR tokens
 
 - Create IAM role for the Pepr webhook to be able to list and create ECR repositories
-  - Ensure the IAM role has the trust relationship configured correctly to allow Pepr to assume the role
-    - Ensure the `sts:AssumeRoleWithWebIdentity` Action is allowed
-    - Ensure the Federated Principal has the correct OIDC provider ARN with correct EKS cluster ID
-    - This might look something like:
+  - See an [example role for reference](iam/json/ecr-webhook-role.json). Be sure to replace the `{{AWS_ACCOUNT_ID}}` and `{{EKS_CLUSTER_ID}}` placeholders, as well as the AWS region with your values.
+  - You will need to create an IAM policy with the appropriate permissions and attach it to the role. See an [example policy for reference](iam/json/ecr-webhook-policy.json). ***Note***: If you only need to work with a private ECR registry, the `ecr-public:` prefixed actions can be removed from the policy. Likewise, if you only need to work with a public ECR registry, the `ecr:` prefixed actions can be removed from the policy.
 
-    ```json
-    {
-        "Version": "2012-10-17",
-        "Statement": [
-            {
-                "Effect": "Allow",
-                "Principal": {
-                    "Federated": "arn:aws:iam::<AWS_ACCOUNT_ID>:oidc-provider/oidc.eks.<AWS_REGION>.amazonaws.com/id/<EKS_CLUSTER_ID>"
-                },
-                "Action": "sts:AssumeRoleWithWebIdentity",
-                "Condition": {
-                    "StringEquals": {
-                        "oidc.eks.us-east-1.amazonaws.com/id/<EKS_CLUSTER_ID>:sub": "system:serviceaccount:pepr-system:pepr-b95dbd80-e078-5eb9-aaf3-bcb9567417d0"
-                    }
-                }
-            }
-        ]
-    }
-    ```
+- (Optional) Create IAM role for the `zarf-ecr-credential-helper` to be able to fetch new ECR auth tokens
+  - The credential helper is an optional component and is NOT required to use ECR as an external Zarf registry. It can be used if you are looking for an automated solution for keeping your image pull secrets updated with valid ECR auth tokens. Frequent rotation of ECR tokens in image pull secrets is required because they expire after 12 hours. <https://docs.aws.amazon.com/AmazonECR/latest/APIReference/API_GetAuthorizationToken.html>
+  - See an [example role for reference](iam/json/ecr-credential-helper-role.json). Be sure to replace the `{{AWS_ACCOUNT_ID}}` and `{{EKS_CLUSTER_ID}}` placeholders, as well as the AWS region with your values.
+  - You will need to create an IAM policy with the appropriate permissions and attach it to the role. See an [example policy for reference](iam/json/ecr-credential-helper-policy.json). ***Note***: If you only need to work with a private ECR registry, the `ecr-public:` prefixed actions can be removed from the policy. Likewise, if you only need to work with a public ECR registry, the `ecr:` prefixed actions can be removed from the policy.
 
-    - TODO: list exact ECR API Actions that need to be allowed for this IAM role
-
-- (Optional) Create IAM role for the `zarf-ecr-credential-helper` to be able to fetch new ECR auth tokens and update image pull secrets
-  - The credential helper is an optional component and is NOT required to use ECR as an external Zarf registry. It can be used if you are looking for an automated solution for keeping your image pull secrets updated with valid ECR auth tokens. Frequent rotation of ECR tokens in image pull secrets is required because they expire after 12 hours.
-  - Ensure the IAM role has the trust relationship configured correctly to allow the `zarf-ecr-credential-helper` to assume the role
-    - Ensure the `sts:AssumeRoleWithWebIdentity` Action is allowed
-    - Ensure the Federated Principal has the correct OIDC provider ARN with correct EKS cluster ID
-    - This might look something like:
-
-    ```json
-    {
-        "Version": "2012-10-17",
-        "Statement": [
-            {
-                "Effect": "Allow",
-                "Principal": {
-                    "Federated": "arn:aws:iam::<AWS_ACCOUNT_ID>:oidc-provider/oidc.eks.<AWS_REGION>.amazonaws.com/id/<EKS_CLUSTER_ID>"
-                },
-                "Action": "sts:AssumeRoleWithWebIdentity",
-                "Condition": {
-                    "StringEquals": {
-                        "oidc.eks.us-east-1.amazonaws.com/id/<EKS_CLUSTER_ID>:sub": "system:serviceaccount:zarf:zarf-ecr-credential-helper"
-                    }
-                }
-            }
-        ]
-    }
-    ```
-
-  - TODO: list exact ECR API Actions that need to be allowed for this IAM role
-
-### Create the Zarf init package
+### Get the Zarf init package
 
 ```bash
-zarf package create . -a amd64 --confirm
+zarf package pull oci://ghcr.io/defenseunicorns/packages/init-aws:v0.0.1-amd64
 ```
 
 ### Initialize EKS cluster with Zarf configured to use ECR as external registry
 
 #### Use ***private*** ECR registry
 
-```bash
+1. Create a Zarf config file `zarf-config.toml`
 
-REGISTRY_TYPE="private"
-AWS_REGION="us-east-1"
+    ```toml
+    architecture = 'amd64'
 
-AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query 'Account' --output text)
-REGISTRY_URL="${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
-ECR_AUTH_TOKEN=$(aws ecr get-login-password --region "${AWS_REGION}")
+    [package.deploy]
+    components = 'zarf-ecr-credential-helper'
 
-zarf init \
-    --registry-url="${REGISTRY_URL}" \
-    --registry-push-username="AWS" \
-    --registry-push-password="${ECR_AUTH_TOKEN}" \
-    --set=REGISTRY_TYPE="${REGISTRY_TYPE}" \
-    --set=AWS_REGION="${AWS_REGION}" \
-    --set=ECR_HOOK_ROLE_ARN="arn:aws:iam::${AWS_ACCOUNT_ID}:role/zarf-ecr" \
-    --set=ECR_CREDENTIAL_HELPER_ROLE_ARN="arn:aws:iam::${AWS_ACCOUNT_ID}:role/zarf-ecr" \
-    --components="zarf-ecr-credential-helper" \
-    -a amd64 \
-    -l debug \
-    --confirm
+    [package.deploy.set]
+    registry_type = 'private'
 
-```
+    # Change me to your AWS region if needed
+    aws_region = 'us-east-1'
+
+    # Set IAM role ARNs
+    ecr_hook_role_arn = '<YOUR_WEBHOOK_ROLE_ARN>'
+    ecr_credential_helper_role_arn = '<YOUR_CREDENTIAL_HELPER_ROLE_ARN>'
+    ```
+
+1. Zarf init
+
+    Note: Be sure to run the `zarf init` command from the same working directory as your Zarf config file
+
+    ```bash
+    AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query 'Account' --output text)
+
+    # Note: Be sure the region you specify in the --registry-url matches the one specified in your Zarf config file
+    zarf init \
+      --registry-url="${AWS_ACCOUNT_ID}.dkr.ecr.<YOUR_AWS_REGION>.amazonaws.com" \
+      --registry-push-username="AWS" \
+      --registry-push-password="$(aws ecr get-login-password --region <YOUR_AWS_REGION>)" \
+      --confirm
+    ```
 
 #### Use ***public*** ECR registry
 
-```bash
+1. Create a Zarf config file `zarf-config.toml`
 
-REGISTRY_TYPE="public"
-AWS_REGION="us-east-1"
+    ```toml
+    architecture = 'amd64'
 
-AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query 'Account' --output text)
-REGISTRY_URL=$(aws ecr-public describe-registries --query 'registries[0].registryUri' --output text)
-ECR_AUTH_TOKEN=$(aws ecr-public get-login-password --region "${AWS_REGION}")
+    [package.deploy]
+    components = 'zarf-ecr-credential-helper'
 
-zarf init \
-    --registry-url="${REGISTRY_URL}" \
-    --registry-push-username="AWS" \
-    --registry-push-password="${ECR_AUTH_TOKEN}" \
-    --set=REGISTRY_TYPE="${REGISTRY_TYPE}" \
-    --set=AWS_REGION="${AWS_REGION}" \
-    --set=ECR_HOOK_ROLE_ARN="arn:aws:iam::${AWS_ACCOUNT_ID}:role/zarf-ecr" \
-    --set=ECR_CREDENTIAL_HELPER_ROLE_ARN="arn:aws:iam::${AWS_ACCOUNT_ID}:role/zarf-ecr" \
-    --components="zarf-ecr-credential-helper" \
-    -a amd64 \
-    -l debug \
-    --confirm
+    [package.deploy.set]
+    registry_type = 'public'
 
-```
+    # Must use us-east-1 region for public ECR registries:
+    # https://docs.aws.amazon.com/AmazonECR/latest/public/public-registries.html#public-registry-auth
+    aws_region = 'us-east-1'
+
+    # Set IAM role ARNs
+    ecr_hook_role_arn = '<YOUR_WEBHOOK_ROLE_ARN>'
+    ecr_credential_helper_role_arn = '<YOUR_CREDENTIAL_HELPER_ROLE_ARN>'
+    ```
+
+1. Zarf init
+
+    Note: Be sure to run the `zarf init` command from the same working directory as your Zarf config file
+
+    ```bash
+    zarf init \
+      --registry-url="$(aws ecr-public describe-registries --query 'registries[0].registryUri' --output text --region us-east-1)" \
+      --registry-push-username="AWS" \
+      --registry-push-password="$(aws ecr-public get-login-password --region us-east-1)" \
+      --confirm
+    ```
 
 ### Deploy workloads to the cluster
 

@@ -120,36 +120,22 @@ jobs:
       - name: Deploy EKS package
         run: make deploy-eks-package CLUSTER_NAME="$CLUSTER_NAME" INSTANCE_TYPE=${{ inputs.instance_type }}
 
-      - name: Create IAM roles for IRSA authentication
-        id: iam-create
-        run: |
-          make create-iam CLUSTER_NAME="$CLUSTER_NAME"
+      - name: Create IAM roles
+        run: make create-iam CLUSTER_NAME="$CLUSTER_NAME"
 
-          cd iam || exit
-          echo "ecr-webhook-role-arn=$(pulumi stack output webhookRoleArn)" >> "$GITHUB_OUTPUT"
-          echo "ecr-credential-helper-role-arn=$(pulumi stack output credentialHelperRoleArn)" >> "$GITHUB_OUTPUT"
+      - name: Update Zarf config file with registry type and IAM role ARNs
+        run: make update-zarf-config REGISTRY_TYPE="private"
+
+        # This allows Zarf to use the zarf-config.toml config file
+      - name: Move Zarf init package to root of repository
+        run: mv build/zarf-init-amd64-*.tar.zst .
 
       - name: Zarf init with private ECR registry
-        working-directory: build
         run: |
-          REGISTRY_TYPE="private"
-          AWS_REGION="us-east-1"
-          
-          AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query 'Account' --output text)
-          REGISTRY_URL="${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
-          ECR_AUTH_TOKEN=$(aws ecr get-login-password --region "${AWS_REGION}")
-          
           zarf init \
-            --registry-url="${REGISTRY_URL}" \
+            --registry-url="$(aws sts get-caller-identity --query 'Account' --output text).dkr.ecr.us-east-1.amazonaws.com" \
             --registry-push-username="AWS" \
-            --registry-push-password="${ECR_AUTH_TOKEN}" \
-            --set=REGISTRY_TYPE="${REGISTRY_TYPE}" \
-            --set=AWS_REGION="${AWS_REGION}" \
-            --set=ECR_HOOK_ROLE_ARN=${{ steps.iam-create.outputs.ecr-webhook-role-arn }} \
-            --set=ECR_CREDENTIAL_HELPER_ROLE_ARN=${{ steps.iam-create.outputs.ecr-credential-helper-role-arn }} \
-            --components="zarf-ecr-credential-helper" \
-            -a amd64 \
-            -l debug \
+            --registry-push-password="$(aws ecr get-login-password --region us-east-1)" \
             --confirm
 
       - name: Teardown the cluster
@@ -159,7 +145,7 @@ jobs:
       - name: Delete private ECR repositories
         if: always()
         run: |
-          repos=("defenseunicorns/pepr/controller" "defenseunicorns/zarf/agent" "lucasrod96/zarf-ecr-credential-helper")
+          repos=("defenseunicorns/pepr/controller" "defenseunicorns/zarf/agent" "defenseunicorns/zarf-init-aws/ecr-credential-helper")
 
           for repo in "${repos[@]}"
           do
@@ -225,36 +211,23 @@ jobs:
       - name: Deploy EKS package
         run: make deploy-eks-package CLUSTER_NAME="$CLUSTER_NAME" INSTANCE_TYPE=${{ inputs.instance_type }}
 
-      - name: Create IAM roles for IRSA authentication
-        id: iam-create
-        run: |
-          make create-iam CLUSTER_NAME="$CLUSTER_NAME"
+      - name: Create IAM roles
+        run: make create-iam CLUSTER_NAME="$CLUSTER_NAME"
 
-          cd iam || exit
-          echo "ecr-webhook-role-arn=$(pulumi stack output webhookRoleArn)" >> "$GITHUB_OUTPUT"
-          echo "ecr-credential-helper-role-arn=$(pulumi stack output credentialHelperRoleArn)" >> "$GITHUB_OUTPUT"
+      - name: Update Zarf config file with registry type and IAM role ARNs
+        run: make update-zarf-config REGISTRY_TYPE="public"
+
+        # This allows Zarf to use the zarf-config.toml config file
+      - name: Move Zarf init package to root of repository
+        run: mv build/zarf-init-amd64-*.tar.zst .
 
       - name: Zarf init with public ECR registry
         working-directory: build
         run: |
-          REGISTRY_TYPE="public"
-          AWS_REGION="us-east-1"
-
-          AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query 'Account' --output text)
-          REGISTRY_URL=$(aws ecr-public describe-registries --query 'registries[0].registryUri' --output text)
-          ECR_AUTH_TOKEN=$(aws ecr-public get-login-password --region "${AWS_REGION}")
-
           zarf init \
-            --registry-url="${REGISTRY_URL}" \
+            --registry-url="$(aws ecr-public describe-registries --query 'registries[0].registryUri' --output text --region us-east-1)" \
             --registry-push-username="AWS" \
-            --registry-push-password="${ECR_AUTH_TOKEN}" \
-            --set=REGISTRY_TYPE="${REGISTRY_TYPE}" \
-            --set=AWS_REGION="${AWS_REGION}" \
-            --set=ECR_HOOK_ROLE_ARN=${{ steps.iam-create.outputs.ecr-webhook-role-arn }} \
-            --set=ECR_CREDENTIAL_HELPER_ROLE_ARN=${{ steps.iam-create.outputs.ecr-credential-helper-role-arn }} \
-            --components="zarf-ecr-credential-helper" \
-            -a amd64 \
-            -l debug \
+            --registry-push-password="$(aws ecr-public get-login-password --region us-east-1)" \
             --confirm
 
       - name: Teardown the cluster
@@ -264,7 +237,7 @@ jobs:
       - name: Delete public ECR repositories
         if: always()
         run: |
-          repos=("defenseunicorns/pepr/controller" "defenseunicorns/zarf/agent" "lucasrod96/zarf-ecr-credential-helper")
+          repos=("defenseunicorns/pepr/controller" "defenseunicorns/zarf/agent" "defenseunicorns/zarf-init-aws/ecr-credential-helper")
 
           for repo in "${repos[@]}"
           do

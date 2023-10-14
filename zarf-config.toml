@@ -1,3 +1,6 @@
+#log_level = 'debug'
+architecture = 'amd64'
+
 [package.create.set]
 # The image reference to use for the Pepr controller
 pepr_image_domain = 'ghcr.io'
@@ -17,3 +20,12 @@ credential_helper_image_tag = 'local'
 registry_image_domain = ''
 registry_image = ''
 registry_image_tag = ''
+
+[package.deploy]
+components = 'zarf-ecr-credential-helper'
+
+[package.deploy.set]
+aws_region = 'us-east-1'
+registry_type = ''
+ecr_hook_role_arn = ''
+ecr_credential_helper_role_arn = ''

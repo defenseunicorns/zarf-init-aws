@@ -7,6 +7,7 @@ CREDENTIAL_HELPER_BIN := ./build/zarf-ecr-credential-helper
 CLUSTER_NAME ?= ""
 INSTANCE_TYPE ?= t3.small
 EKS_PACKAGE := ./build/zarf-package-distro-eks-multi-0.0.4.tar.zst
+REGISTRY_TYPE ?= ""
 ######################################################################################
 
 .DEFAULT_GOAL := help
@@ -49,7 +50,7 @@ aws-init-package: ## Build the AWS Zarf init package
 	zarf package create -o build -a $(ARCH) --confirm .
 
 eks-package: ## Build the EKS package
-	zarf package create packages/eks -o build --confirm
+	zarf package create packages/eks -a multi -o build --confirm
 
 deploy-eks-package: ## Deploy the EKS package to create an EKS cluster
 	@if [ -z "$(CLUSTER_NAME)" ]; then \
@@ -79,10 +80,14 @@ create-iam: ## Create AWS IAM policies and roles used in CI
 	@cd iam || exit \
 	&& pulumi logout \
 	&& pulumi login --local \
-	&& PULUMI_CONFIG_PASSPHRASE="" pulumi stack init ci \
+	&& test $$(pulumi stack --show-name --non-interactive) || PULUMI_CONFIG_PASSPHRASE="" pulumi stack init ci \
 	&& PULUMI_CONFIG_PASSPHRASE="" CLUSTER_NAME="$(CLUSTER_NAME)" pulumi up --yes
 
 delete-iam: ## Delete AWS IAM policies and roles used in CI
 	@cd iam || exit \
 	&& PULUMI_CONFIG_PASSPHRASE="" pulumi down --yes \
 	&& PULUMI_CONFIG_PASSPHRASE="" pulumi stack rm ci --yes
+
+update-zarf-config: ## Update Zarf config file with registry type and IAM role ARN values
+	@cd iam || exit \
+	&& node ../hack/update-zarf-config.mjs "$(REGISTRY_TYPE)" "$$(PULUMI_CONFIG_PASSPHRASE="" pulumi stack output webhookRoleArn)" "$$(PULUMI_CONFIG_PASSPHRASE="" pulumi stack output credentialHelperRoleArn)"
