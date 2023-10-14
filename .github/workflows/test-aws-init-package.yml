@@ -222,7 +222,6 @@ jobs:
         run: mv build/zarf-init-amd64-*.tar.zst .
 
       - name: Zarf init with public ECR registry
-        working-directory: build
         run: |
           zarf init \
             --registry-url="$(aws ecr-public describe-registries --query 'registries[0].registryUri' --output text --region us-east-1)" \
