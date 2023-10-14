@@ -49,9 +49,9 @@ The `{{EKS_CLUSTER_ID}}` is a placeholder value for an EKS cluster's OIDC issuer
 Four approaches have been considered to handle the updating and provisioning of the IAM policies and roles needed for our tests:
 
 1. Shell script using AWS CLI
-1. Pulumi Go SDK
-1. Pulumi TypeScript SDK
-1. Terraform
+2. Pulumi Go SDK
+3. Pulumi TypeScript SDK
+4. Terraform
 
 ### Shell script using AWS CLI
 
