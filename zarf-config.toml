@@ -1,4 +1,4 @@
-#log_level = 'debug'
+log_level = 'debug'
 architecture = 'amd64'
 
 [package.create.set]
