@@ -1,0 +1,30 @@
+name: Analyze CVEs
+
+permissions:
+  contents: read
+
+on:
+  schedule:
+    - cron: "0 10 * * *"
+  pull_request:
+    paths:
+      - "package.json"
+      - "package-lock.json"
+      - "credential-helper/go.mod"
+      - "credential-helper/go.sum"
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac # v4.0.0
+
+      - name: Setup Go
+        uses: defenseunicorns/zarf/.github/actions/golang@main
+
+      - name: Install tools
+        uses: defenseunicorns/zarf/.github/actions/install-tools@main
+
+      - name: Check for CVEs in Dependencies
+        run: make test-cves

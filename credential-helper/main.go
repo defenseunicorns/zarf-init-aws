@@ -10,29 +10,18 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ecr"
-	"github.com/defenseunicorns/zarf/src/config"
-	"github.com/defenseunicorns/zarf/src/types"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/klog/v2"
 )
 
-type DockerConfig struct {
-	Auths DockerConfigEntry `json:"auths"`
-}
-
-type DockerConfigEntry map[string]DockerConfigEntryWithAuth
-
-type DockerConfigEntryWithAuth struct {
-	Auth string `json:"auth"`
-}
-
 const (
 	zarfNamespace       = "zarf"
 	zarfImagePullSecret = "private-registry"
 	zarfStateSecret     = "zarf-state"
-	agentLabel          = "zarf.dev/agent"
+	zarfAgentLabel      = "zarf.dev/agent"
+	zarfManagedByLabel  = "app.kubernetes.io/managed-by"
 )
 
 func main() {
@@ -81,7 +70,7 @@ func getECRURL(clientset *kubernetes.Clientset) (string, error) {
 		return "", fmt.Errorf("Failed to get secret '%s' in namespace '%s': %w\n", zarfStateSecret, zarfNamespace, err)
 	}
 
-	var zarfState types.ZarfState
+	var zarfState ZarfState
 	if err = json.Unmarshal(secret.Data["state"], &zarfState); err != nil {
 		return "", fmt.Errorf("Failed to unmarshal 'secret.data.state' from the '%s' secret\n", zarfStateSecret)
 	}
@@ -129,8 +118,8 @@ func updateZarfManagedImageSecrets(clientset *kubernetes.Clientset, ecrURL strin
 		}
 
 		// Check if this is a Zarf managed secret or is in a namespace the Zarf agent will take action in
-		if registrySecret.Labels[config.ZarfManagedByLabel] == "zarf" ||
-			(namespace.Labels[agentLabel] != "skip" && namespace.Labels[agentLabel] != "ignore") {
+		if registrySecret.Labels[zarfManagedByLabel] == "zarf" ||
+			(namespace.Labels[zarfAgentLabel] != "skip" && namespace.Labels[zarfAgentLabel] != "ignore") {
 
 			// Update the secret with the new ECR auth token
 			dockerConfigJSON := DockerConfig{

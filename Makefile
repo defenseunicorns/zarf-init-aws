@@ -91,3 +91,7 @@ delete-iam: ## Delete AWS IAM policies and roles used in CI
 update-zarf-config: ## Update Zarf config file with registry type and IAM role ARN values
 	@cd iam || exit \
 	&& node ../hack/update-zarf-config.mjs "$(REGISTRY_TYPE)" "$$(PULUMI_CONFIG_PASSPHRASE="" pulumi stack output webhookRoleArn)" "$$(PULUMI_CONFIG_PASSPHRASE="" pulumi stack output credentialHelperRoleArn)"
+
+# INTERNAL: used to test for new CVEs that may have been introduced
+test-cves:
+	zarf tools sbom packages --exclude './iam' . -o json | grype --fail-on low

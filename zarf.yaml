@@ -61,7 +61,7 @@ components:
   - name: zarf-agent
     required: true
     import:
-      url: oci://ghcr.io/defenseunicorns/packages/init:v0.30.0-skeleton
+      url: oci://ghcr.io/defenseunicorns/packages/init:v0.30.1-skeleton
       name: zarf-agent
 
   - name: zarf-ecr-credential-helper
@@ -84,5 +84,5 @@ components:
   # (Optional) Adds a git server to the cluster
   - name: git-server
     import:
-      url: oci://ghcr.io/defenseunicorns/packages/init:v0.30.0-skeleton
+      url: oci://ghcr.io/defenseunicorns/packages/init:v0.30.1-skeleton
       name: git-server

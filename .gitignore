@@ -4,3 +4,6 @@ insecure*
 coverage
 build
 Pulumi.**.yaml
+binaries
+eks.yaml
+**.tar.zst

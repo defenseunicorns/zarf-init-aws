@@ -1,0 +1,6 @@
+ignore:
+  # Waiting on upstream to patch: https://github.com/golang/go/issues/63577
+  - vulnerability: GHSA-qppj-fm5r-hxr3
+
+  # Waiting on upstream to patch: https://github.com/golang/go/issues/63577
+  - vulnerability: GHSA-4374-p667-p6c8

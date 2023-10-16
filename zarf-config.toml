@@ -10,7 +10,7 @@ pepr_image_tag = 'v0.14.1'
 # The image reference to use for the Zarf agent, defaults to a locally built image
 agent_image_domain = 'ghcr.io/'
 agent_image = 'defenseunicorns/zarf/agent'
-agent_image_tag = 'v0.30.0'
+agent_image_tag = 'v0.30.1'
 
 # The image reference to use for the ECR credential helper, defaults to a locally built image
 credential_helper_image_domain = 'ghcr.io/'
