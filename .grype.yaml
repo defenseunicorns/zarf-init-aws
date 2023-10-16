@@ -1,6 +1,8 @@
 ignore:
   # Waiting on upstream to patch: https://github.com/golang/go/issues/63577
+  # Grype throws a false positive 
   - vulnerability: GHSA-qppj-fm5r-hxr3
 
   # Waiting on upstream to patch: https://github.com/golang/go/issues/63577
+  # Grype throws a false positive
   - vulnerability: GHSA-4374-p667-p6c8
