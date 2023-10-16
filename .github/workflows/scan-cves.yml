@@ -26,5 +26,8 @@ jobs:
       - name: Install tools
         uses: defenseunicorns/zarf/.github/actions/install-tools@main
 
+      - name: Install latest version of Zarf
+        uses: defenseunicorns/setup-zarf@main
+
       - name: Check for CVEs in Dependencies
         run: make test-cves
