@@ -10,8 +10,8 @@ on:
     paths:
       - "package.json"
       - "package-lock.json"
-      - "credential-helper/go.mod"
-      - "credential-helper/go.sum"
+      - "go.mod"
+      - "go.sum"
 
 jobs:
   validate:

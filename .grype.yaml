@@ -1,8 +1,5 @@
-ignore:
-  # Waiting on upstream to patch: https://github.com/golang/go/issues/63577
-  # Grype throws a false positive 
-  - vulnerability: GHSA-qppj-fm5r-hxr3
+# Ignore list for vulnerabilities with a CVSS severity rating higher than "low".
+# These will either be false positives or cannot be immediately patched.
 
-  # Waiting on upstream to patch: https://github.com/golang/go/issues/63577
-  # Grype throws a false positive
-  - vulnerability: GHSA-4374-p667-p6c8
+# ignore:
+#   - vulnerability: GHSA-qppj-fm5r-hxr3

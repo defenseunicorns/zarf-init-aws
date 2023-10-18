@@ -39,8 +39,7 @@ test-module: ## Test the ECR Pepr module
 
 # Note: the path to the main.go file is not used due to https://github.com/golang/go/issues/51831#issuecomment-1074188363
 build-credential-helper-linux-amd: ## Build the ECR credential helper binary for Linux on AMD64
-	cd credential-helper || exit \
-	&& CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="$(BUILD_ARGS)" -o ../build/zarf-ecr-credential-helper
+	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o ./build/zarf-ecr-credential-helper
 
 build-local-credential-helper-image: ## Build the ECR credential helper image to be used in a locally built init package
 	@test -s $(CREDENTIAL_HELPER_BIN) || $(MAKE) build-credential-helper-linux-amd
@@ -95,3 +94,6 @@ update-zarf-config: ## Update Zarf config file with registry type and IAM role A
 # INTERNAL: used to test for new CVEs that may have been introduced
 test-cves:
 	zarf tools sbom packages --exclude './iam' . -o json | grype --fail-on low
+
+cve-report: ## Create a CVE report for the current project (must `brew install grype` first)
+	zarf tools sbom packages --exclude './iam' --exclude './binaries' . -o json | grype -o template -t hack/.templates/grype.tmpl > build/zarf-known-cves.csv

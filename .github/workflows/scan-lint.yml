@@ -16,4 +16,4 @@ jobs:
         with:
           config: revive.toml
           # Path pattern (default: ./...)
-          path: "./credential-helper/..."
+          # path:
