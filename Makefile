@@ -3,7 +3,7 @@
 
 # Provide a default value for the operating system architecture used in tests, e.g. " APPLIANCE_MODE=true|false make test-e2e ARCH=arm64"
 ARCH ?= amd64
-CLI_VERSION ?= $(if $(shell git describe --tags),$(shell git describe --tags),"UnknownVersion")
+ZARF_VERSION ?= $$(zarf version)
 CREDENTIAL_HELPER_BIN := ./build/zarf-ecr-credential-helper
 CLUSTER_NAME ?= ""
 INSTANCE_TYPE ?= t3.small
@@ -55,7 +55,7 @@ release-aws-init-package:
 
 # INTERNAL: used to publish the AWS init package
 publish-aws-init-package:
-	zarf package publish build/zarf-init-$(ARCH)-$(CLI_VERSION).tar.zst oci://$(REPOSITORY_URL)
+	zarf package publish build/zarf-init-$(ARCH)-$(ZARF_VERSION).tar.zst oci://$(REPOSITORY_URL)
 	zarf package publish . oci://$(REPOSITORY_URL)
 
 eks-package: ## Build the EKS package
