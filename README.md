@@ -121,11 +121,3 @@ zarf package pull oci://ghcr.io/defenseunicorns/packages/init-aws:v0.0.1-amd64
       --registry-push-password="$(aws ecr-public get-login-password --region us-east-1)" \
       --confirm
     ```
-
-### Deploy workloads to the cluster
-
-Now that Zarf is deployed in the EKS cluster and configured to use ECR as as an external registry, let's deploy some workloads to the cluster and verify that Zarf is rewriting our container images to be stored in ECR:
-
-```bash
-zarf package deploy oci://example-registry.io/example-repo/example-package:v0.0.1
-```
