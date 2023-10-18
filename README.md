@@ -26,7 +26,7 @@ This repository contains the Zarf init package for AWS that uses the [Amazon Ela
 - Connection to an existing EKS cluster configured with an IAM OIDC identity provider to allow [IRSA](https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html) authentication
   - <https://docs.aws.amazon.com/eks/latest/userguide/enable-iam-roles-for-service-accounts.html>
 
-- AWS CLI configured with the necessary permissions to create ECR repositories and fetch ECR tokens
+- AWS CLI configured with the necessary permissions to describe and create ECR repositories, and fetch ECR tokens
 
 - Create IAM role for the Pepr webhook to be able to list and create ECR repositories
   - See an [example role for reference](iam/json/ecr-webhook-role.json). Be sure to replace the `{{AWS_ACCOUNT_ID}}` and `{{EKS_CLUSTER_ID}}` placeholders, as well as the AWS region with your values.
