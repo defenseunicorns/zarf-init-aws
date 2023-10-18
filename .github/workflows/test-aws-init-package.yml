@@ -161,13 +161,6 @@ jobs:
         if: always()
         uses: defenseunicorns/zarf/.github/actions/save-logs@main
 
-      # TODO: add slack webhook URL secret
-      # - name: Send trigger to Slack on workflow failure
-      #   if: failure()
-      #   uses: defenseunicorns/zarf/.github/actions/slack@main
-      #   with:
-      #     slack-webhook-url: ${{ secrets.SLACK_WEBHOOK_URL }}
-
   # Deploy and test AWS init package with public ECR registry
   validate-public-ecr:
     runs-on: ubuntu-latest
@@ -252,10 +245,3 @@ jobs:
       - name: Save logs
         if: always()
         uses: defenseunicorns/zarf/.github/actions/save-logs@main
-
-      # TODO: add slack webhook URL secret
-      # - name: Send trigger to Slack on workflow failure
-      #   if: failure()
-      #   uses: defenseunicorns/zarf/.github/actions/slack@main
-      #   with:
-      #     slack-webhook-url: ${{ secrets.SLACK_WEBHOOK_URL }}
