@@ -49,7 +49,7 @@ jobs:
         run: make release-aws-init-package CREDENTIAL_HELPER_IMAGE_TAG=$GITHUB_REF_NAME
 
       - name: Publish AWS Init Package as OCI and Skeleton
-        run: make publish-init-package ARCH=amd64 REPOSITORY_URL=ghcr.io/defenseunicorns/packages
+        run: make publish-aws-init-package ARCH=amd64 REPOSITORY_URL=ghcr.io/defenseunicorns/packages
 
       # Create a CVE report based on this build
       - name: Create release time CVE report
