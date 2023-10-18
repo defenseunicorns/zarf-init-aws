@@ -3,6 +3,7 @@
 
 # Provide a default value for the operating system architecture used in tests, e.g. " APPLIANCE_MODE=true|false make test-e2e ARCH=arm64"
 ARCH ?= amd64
+CLI_VERSION ?= $(if $(shell git describe --tags),$(shell git describe --tags),"UnknownVersion")
 CREDENTIAL_HELPER_BIN := ./build/zarf-ecr-credential-helper
 CLUSTER_NAME ?= ""
 INSTANCE_TYPE ?= t3.small
@@ -47,6 +48,15 @@ build-local-credential-helper-image: ## Build the ECR credential helper image to
 
 aws-init-package: ## Build the AWS Zarf init package
 	zarf package create -o build -a $(ARCH) --confirm .
+
+# INTERNAL: used to build a release version of the AWS init package with a specific credential-helper image
+release-aws-init-package:
+	zarf package create -o build -a $(ARCH) --set CREDENTIAL_HELPER_IMAGE_TAG=$(CREDENTIAL_HELPER_IMAGE_TAG) --confirm .
+
+# INTERNAL: used to publish the AWS init package
+publish-aws-init-package:
+	zarf package publish build/zarf-init-$(ARCH)-$(CLI_VERSION).tar.zst oci://$(REPOSITORY_URL)
+	zarf package publish . oci://$(REPOSITORY_URL)
 
 eks-package: ## Build the EKS package
 	zarf package create packages/eks -a multi -o build --confirm
