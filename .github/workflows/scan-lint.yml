@@ -15,5 +15,3 @@ jobs:
         uses: docker://morphy/revive-action:v2
         with:
           config: revive.toml
-          # Path pattern (default: ./...)
-          # path:
