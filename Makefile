@@ -126,7 +126,7 @@ deploy-init-package-public: ## Run zarf init to deploy the AWS init package conf
         --confirm
 
 delete-public-repos: ## Delete public ECR repos created by deploying the AWS init package
-	@repos=("defenseunicorns/pepr/controller defenseunicorns/zarf/agent defenseunicorns/zarf-init-aws/ecr-credential-helper"); \
+	@repos="defenseunicorns/pepr/controller defenseunicorns/zarf/agent defenseunicorns/zarf-init-aws/ecr-credential-helper"; \
 	for repo in $${repos}; do \
 		aws ecr-public delete-repository --repository-name "$$repo" --force || true; \
 	done
