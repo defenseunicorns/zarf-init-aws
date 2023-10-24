@@ -101,6 +101,36 @@ update-zarf-config: ## Update Zarf config file with registry type and IAM role A
 	@cd iam || exit \
 	&& node ../hack/update-zarf-config.mjs "$(REGISTRY_TYPE)" "$$(PULUMI_CONFIG_PASSPHRASE="" pulumi stack output webhookRoleArn)" "$$(PULUMI_CONFIG_PASSPHRASE="" pulumi stack output credentialHelperRoleArn)"
 
+deploy-init-package-private: ## Run zarf init to deploy the AWS init package configured with private ECR registry
+	@cd build || exit \
+	&& ZARF_CONFIG="../zarf-config.toml" zarf init \
+		--registry-url="$$(aws sts get-caller-identity --query 'Account' --output text).dkr.ecr.us-east-1.amazonaws.com" \
+        --registry-push-username="AWS" \
+        --registry-push-password="$$(aws ecr get-login-password --region us-east-1)" \
+        --components="zarf-ecr-credential-helper" \
+        --confirm
+
+delete-private-repos: ## Delete private ECR repos created by deploying the AWS init package
+	@repos=("defenseunicorns/pepr/controller" "defenseunicorns/zarf/agent" "defenseunicorns/zarf-init-aws/ecr-credential-helper"); \
+	for repo in $${repos[@]}; do \
+		aws ecr delete-repository --repository-name "$$repo" --force || true; \
+	done
+
+deploy-init-package-public: ## Run zarf init to deploy the AWS init package configured with public ECR registry
+	@cd build || exit \
+	&& ZARF_CONFIG="../zarf-config.toml" zarf init \
+		--registry-url="$$(aws ecr-public describe-registries --query 'registries[0].registryUri' --output text --region us-east-1)" \
+        --registry-push-username="AWS" \
+        --registry-push-password="$$(aws ecr-public get-login-password --region us-east-1)" \
+        --components="zarf-ecr-credential-helper" \
+        --confirm
+
+delete-public-repos: ## Delete public ECR repos created by deploying the AWS init package
+	@repos=("defenseunicorns/pepr/controller" "defenseunicorns/zarf/agent" "defenseunicorns/zarf-init-aws/ecr-credential-helper"); \
+	for repo in $${repos[@]}; do \
+		aws ecr-public delete-repository --repository-name "$$repo" --force || true; \
+	done
+
 # INTERNAL: used to test for new CVEs that may have been introduced
 test-cves:
 	zarf tools sbom packages . -o json | grype --fail-on low

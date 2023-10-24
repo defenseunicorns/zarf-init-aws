@@ -126,18 +126,8 @@ jobs:
       - name: Update Zarf config file with registry type and IAM role ARNs
         run: make update-zarf-config REGISTRY_TYPE="private"
 
-        # This allows Zarf to use the zarf-config.toml config file
-      - name: Move Zarf init package to root of repository
-        run: mv build/zarf-init-amd64-*.tar.zst .
-
       - name: Zarf init with private ECR registry
-        run: |
-          zarf init \
-            --registry-url="$(aws sts get-caller-identity --query 'Account' --output text).dkr.ecr.us-east-1.amazonaws.com" \
-            --registry-push-username="AWS" \
-            --registry-push-password="$(aws ecr get-login-password --region us-east-1)" \
-            --components="zarf-ecr-credential-helper" \
-            --confirm
+        run: make deploy-init-package-private
 
       - name: Teardown the cluster
         if: always()
@@ -145,13 +135,7 @@ jobs:
 
       - name: Delete private ECR repositories
         if: always()
-        run: |
-          repos=("defenseunicorns/pepr/controller" "defenseunicorns/zarf/agent" "defenseunicorns/zarf-init-aws/ecr-credential-helper")
-
-          for repo in "${repos[@]}"
-          do
-            aws ecr delete-repository --repository-name "${repo}" --force || true
-          done
+        run: make delete-private-repos
 
       - name: Delete IAM roles
         if: always()
@@ -211,18 +195,8 @@ jobs:
       - name: Update Zarf config file with registry type and IAM role ARNs
         run: make update-zarf-config REGISTRY_TYPE="public"
 
-        # This allows Zarf to use the zarf-config.toml config file
-      - name: Move Zarf init package to root of repository
-        run: mv build/zarf-init-amd64-*.tar.zst .
-
       - name: Zarf init with public ECR registry
-        run: |
-          zarf init \
-            --registry-url="$(aws ecr-public describe-registries --query 'registries[0].registryUri' --output text --region us-east-1)" \
-            --registry-push-username="AWS" \
-            --registry-push-password="$(aws ecr-public get-login-password --region us-east-1)" \
-            --components="zarf-ecr-credential-helper" \
-            --confirm
+        run: make deploy-init-package-public
 
       - name: Teardown the cluster
         if: always()
@@ -230,13 +204,7 @@ jobs:
 
       - name: Delete public ECR repositories
         if: always()
-        run: |
-          repos=("defenseunicorns/pepr/controller" "defenseunicorns/zarf/agent" "defenseunicorns/zarf-init-aws/ecr-credential-helper")
-
-          for repo in "${repos[@]}"
-          do
-            aws ecr-public delete-repository --repository-name "${repo}" --force || true
-          done
+        run: make delete-public-repos
 
       - name: Delete IAM roles
         if: always()
