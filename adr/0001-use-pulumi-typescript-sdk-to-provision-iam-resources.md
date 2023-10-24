@@ -86,7 +86,8 @@ Pros:
 
 Cons:
 
-- N/A
+- Typescript is a less common language in DevOps vs Go
+- By default, TS requires a NodeJS runtime to execute (less portable than a statically linked binary)
 
 ### Terraform
 
