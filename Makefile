@@ -103,7 +103,7 @@ update-zarf-config: ## Update Zarf config file with registry type and IAM role A
 
 # INTERNAL: used to test for new CVEs that may have been introduced
 test-cves:
-	zarf tools sbom packages --exclude './iam' . -o json | grype --fail-on low
+	zarf tools sbom packages . -o json | grype --fail-on low
 
 cve-report: ## Create a CVE report for the current project (must `brew install grype` first)
-	zarf tools sbom packages --exclude './iam' --exclude './binaries' . -o json | grype -o template -t hack/.templates/grype.tmpl > build/zarf-known-cves.csv
+	zarf tools sbom packages --exclude './binaries' . -o json | grype -o template -t hack/.templates/grype.tmpl > build/zarf-known-cves.csv

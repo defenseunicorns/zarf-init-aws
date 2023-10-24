@@ -1,5 +1,0 @@
-# Ignore list for vulnerabilities with a CVSS severity rating higher than "low".
-# These will either be false positives or cannot be immediately patched.
-
-# ignore:
-#   - vulnerability: GHSA-qppj-fm5r-hxr3
