@@ -1,4 +1,4 @@
-# Zarf Init Package for AWS - DevSecOps for Air Gap
+# Zarf Init Package for AWS
 
 [![Latest Release](https://img.shields.io/github/v/release/defenseunicorns/zarf-init-aws)](https://github.com/defenseunicorns/zarf-init-aws/releases)
 [![Build Status](https://img.shields.io/github/actions/workflow/status/defenseunicorns/zarf-init-aws/release.yml)](https://github.com/defenseunicorns/zarf-init-aws/actions/workflows/release.yml)
