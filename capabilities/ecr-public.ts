@@ -12,10 +12,10 @@ export const publicECRURLPattern =
   /^public\.ecr\.aws\/[a-z][a-z0-9]+(?:[._-][a-z0-9]+)*$/;
 
 export class ECRPublic implements ECRProvider {
-  private ecrPublic: ECRPUBLICClient;
+  private ecr: ECRPUBLICClient;
 
   constructor(region: string) {
-    this.ecrPublic = new ECRPUBLICClient({ region });
+    this.ecr = new ECRPUBLICClient({ region });
   }
 
   async listExistingRepositories(repoNames: string[]): Promise<string[]> {
@@ -28,7 +28,7 @@ export class ECRPublic implements ECRProvider {
         };
 
         try {
-          await this.ecrPublic.send(new DescribeRepositoriesCommand(params));
+          await this.ecr.send(new DescribeRepositoriesCommand(params));
           Log.info(`Repository '${repoName}' already exists`);
           existingRepositories.push(repoName);
         } catch (err) {
@@ -57,7 +57,7 @@ export class ECRPublic implements ECRProvider {
             repositoryName: repoName,
           };
 
-          await this.ecrPublic.send(new CreateRepositoryCommand(createParams));
+          await this.ecr.send(new CreateRepositoryCommand(createParams));
 
           Log.info(`ECR Repository '${repoName}' created successfully.`);
         }
