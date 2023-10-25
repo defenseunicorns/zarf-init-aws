@@ -42,8 +42,8 @@ export async function isECRregistry(): Promise<ECRCheckResult> {
 }
 
 export function getRepositoryNames(images: string[]): string[] {
-  if (!images) {
-    return [];
+  if (images.length === 0) {
+    throw new Error("Error: expected at least 1 image reference, but got none");
   }
 
   const repoNames = images.map((image: string) => {

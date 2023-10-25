@@ -40,9 +40,12 @@ describe("getRepositoryNames", () => {
     });
   });
 
-  it("correctly handles empty input array", () => {
-    const result = getRepositoryNames([]);
-    expect(result).toEqual([]);
+  it("throws an error when the images input array is null", () => {
+    const testFunction = () => getRepositoryNames([]);
+
+    expect(testFunction).toThrow(
+      "Error: expected at least 1 image reference, but got none",
+    );
   });
 });
 
