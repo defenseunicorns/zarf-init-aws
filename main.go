@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -26,13 +27,16 @@ const (
 )
 
 func main() {
+	ctx, cancel := context.WithTimeout(context.TODO(), 30*time.Second)
+	defer cancel()
+
 	clientset, err := newK8sClient()
 	if err != nil {
 		klog.Errorf("failed to create Kubernetes clientset: %v", err)
 		os.Exit(1)
 	}
 
-	ecrURL, err := getECRURL(clientset)
+	ecrURL, err := getECRURL(ctx, clientset)
 	if err != nil {
 		klog.Errorf("failed to get ECR URL from zarf-state secret: %v", err)
 		os.Exit(1)
@@ -44,7 +48,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	err = updateZarfManagedImageSecrets(clientset, ecrURL, authToken)
+	err = updateZarfManagedImageSecrets(ctx, clientset, ecrURL, authToken)
 	if err != nil {
 		klog.Errorf("failed to update ECR image pull credentials: %v", err)
 		os.Exit(1)
@@ -65,8 +69,8 @@ func newK8sClient() (*kubernetes.Clientset, error) {
 	return clientset, nil
 }
 
-func getECRURL(clientset *kubernetes.Clientset) (string, error) {
-	secret, err := clientset.CoreV1().Secrets(zarfNamespace).Get(context.TODO(), zarfStateSecret, metav1.GetOptions{})
+func getECRURL(ctx context.Context, clientset *kubernetes.Clientset) (string, error) {
+	secret, err := clientset.CoreV1().Secrets(zarfNamespace).Get(ctx, zarfStateSecret, metav1.GetOptions{})
 	if err != nil {
 		return "", fmt.Errorf("failed to get secret '%s' in namespace '%s': %w", zarfStateSecret, zarfNamespace, err)
 	}
@@ -106,14 +110,14 @@ func fetchECRToken() (string, error) {
 	return *authOutput.AuthorizationData[0].AuthorizationToken, nil
 }
 
-func updateZarfManagedImageSecrets(clientset *kubernetes.Clientset, ecrURL string, authToken string) error {
-	namespaces, err := clientset.CoreV1().Namespaces().List(context.TODO(), metav1.ListOptions{})
+func updateZarfManagedImageSecrets(ctx context.Context, clientset *kubernetes.Clientset, ecrURL string, authToken string) error {
+	namespaces, err := clientset.CoreV1().Namespaces().List(ctx, metav1.ListOptions{})
 	if err != nil {
 		return fmt.Errorf("error listing namespaces: %w", err)
 	}
 
 	for _, namespace := range namespaces.Items {
-		registrySecret, err := clientset.CoreV1().Secrets(namespace.Name).Get(context.TODO(), zarfImagePullSecret, metav1.GetOptions{})
+		registrySecret, err := clientset.CoreV1().Secrets(namespace.Name).Get(ctx, zarfImagePullSecret, metav1.GetOptions{})
 		if err != nil {
 			continue
 		}
@@ -138,7 +142,7 @@ func updateZarfManagedImageSecrets(clientset *kubernetes.Clientset, ecrURL strin
 
 			registrySecret.Data[".dockerconfigjson"] = dockerConfigData
 
-			updatedRegistrySecret, err := clientset.CoreV1().Secrets(namespace.Name).Update(context.TODO(), registrySecret, metav1.UpdateOptions{})
+			updatedRegistrySecret, err := clientset.CoreV1().Secrets(namespace.Name).Update(ctx, registrySecret, metav1.UpdateOptions{})
 			if err != nil {
 				return fmt.Errorf("failed to update secret '%s' in namespace '%s': %w", updatedRegistrySecret.Name, namespace.Name, err)
 			}
