@@ -3,7 +3,7 @@ import { getCluster } from "@pulumi/aws/eks";
 import { readFileSync } from "fs";
 
 export function createPolicy(file: string, policyName: string) {
-  const policy = readFile(file);
+  const policy = readFileSync(file, "utf8");
   return new iam.Policy(policyName, {
     policy: policy,
   });
@@ -15,7 +15,7 @@ export function createRole(
   accountId: string,
   clusterId: string,
 ) {
-  const placeholderRole = readFile(file);
+  const placeholderRole = readFileSync(file, "utf8");
 
   const partiallyUpdatedRole = placeholderRole.replace(
     new RegExp("{{AWS_ACCOUNT_ID}}", "g"),
@@ -70,8 +70,4 @@ export async function getClusterId(): Promise<string> {
 export async function getAccountId(): Promise<string> {
   const callerId = await getCallerIdentity({});
   return callerId.accountId;
-}
-
-export function readFile(filename: string): string {
-  return readFileSync(filename, "utf8");
 }
