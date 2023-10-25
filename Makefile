@@ -28,12 +28,16 @@ destroy: ## Run `zarf destroy` on the current cluster
 delete-packages: ## Delete all Zarf package tarballs in the project recursively
 	find . -type f -name 'zarf-package-*' -delete
 
+lint-ts: ## Validate formatting of all typescript code in the repository
+	npx pepr format --validate-only
+
+# Note: This will automatically make changes to .ts files
+format-ts: ## Format all typescript code in the repository
+	npx pepr format
+
 build-module: ## Build the ECR Pepr module
 	npm run build
 	cp ./dist/pepr-module-b95dbd80-e078-5eb9-aaf3-bcb9567417d0.yaml ./manifests/
-
-format-module: ## Format the ECR Pepr module
-	npx pepr format
 
 test-module: ## Test the ECR Pepr module
 	npm run unit-test
