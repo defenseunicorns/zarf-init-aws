@@ -13,13 +13,19 @@ make test-module
 ### Format the Pepr module
 
 ```bash
-make format-module
+make format-ts
 ```
 
 ### Rebuild the Pepr module
 
 ```bash
 make build-module
+```
+
+## Build the AWS init package
+
+```bash
+make aws-init-package
 ```
 
 ## Create EKS cluster
@@ -36,12 +42,6 @@ Note: The EKS cluster that is provided via CLUSTER_NAME must be ready/available
 make create-iam CLUSTER_NAME=my-cluster-name
 ```
 
-## Build the AWS init package
-
-```bash
-make aws-init-package
-```
-
 ## Update the Zarf config file with registry type and IAM role ARNs
 
 ```bash
@@ -51,28 +51,46 @@ make update-zarf-config REGISTRY_TYPE="private"
 
 ## Zarf init
 
-Note: Ensure the init package is in the root of the repository so that the zarf-config.toml file can be used:
+### Private ECR registry
 
 ```bash
-cp ./build/zarf-init-*.tar.zst .
+make deploy-init-package-private 
 ```
 
-```bash
-# Private ECR registry
-zarf init \
-    --registry-url="$(aws sts get-caller-identity --query 'Account' --output text).dkr.ecr.us-east-1.amazonaws.com" \
-    --registry-push-username="AWS" \
-    --registry-push-password="$(aws ecr get-login-password --region us-east-1)" \
-    --components="zarf-ecr-credential-helper" \
-    --confirm
-```
+### Public ECR registry
 
 ```bash
-# Public ECR registry
-zarf init \
-    --registry-url="$(aws ecr-public describe-registries --query 'registries[0].registryUri' --output text --region us-east-1)" \
-    --registry-push-username="AWS" \
-    --registry-push-password="$(aws ecr-public get-login-password --region us-east-1)" \
-    --components="zarf-ecr-credential-helper" \
-    --confirm
+make deploy-init-package-public
+```
+
+## Cleanup
+
+### Remove Zarf from the cluster
+
+```bash
+make destroy
+```
+
+### Teardown the cluster
+
+```bash
+make remove-eks-package
+```
+
+### Delete IAM roles
+
+```bash
+make delete-iam
+```
+
+### Delete private ECR repositories
+
+```bash
+make delete-private-repos
+```
+
+### Delete public ECR repositories
+
+```bash
+make delete-public-repos
 ```
