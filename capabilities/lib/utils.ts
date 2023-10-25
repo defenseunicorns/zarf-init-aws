@@ -22,13 +22,14 @@ export async function isECRregistry(): Promise<ECRCheckResult> {
     );
   }
 
+  const registryURL = zarfState.registryInfo.address;
+
   if (zarfState.registryInfo.internalRegistry === true) {
     Log.warn(
       "Zarf is configured to use an internal registry. Skipping creating ECR repos.",
     );
+    return { isECR: false, registryURL };
   }
-
-  const registryURL = zarfState.registryInfo.address;
 
   if (
     publicECRURLPattern.test(registryURL) ||
