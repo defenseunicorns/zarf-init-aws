@@ -10,10 +10,10 @@ import { ECRProvider } from "./ecr-provider";
 
 /**
  * Regular expression pattern to match public ECR URLs.
- * 
+ *
  * See the RegistryAlias name pattern for more info:
  * https://docs.aws.amazon.com/AmazonECRPublic/latest/APIReference/API_RegistryAlias.html
- * 
+ *
  * For a more detailed explanation: https://regex101.com/r/1WsT03/1
  * @type {RegExp}
  */
