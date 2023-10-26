@@ -8,16 +8,32 @@ import {
 import { Log } from "pepr";
 import { ECRProvider } from "./ecr-provider";
 
-export const publicECRURLPattern =
+/**
+ * Regular expression pattern to match public ECR URLs.
+ * @type {RegExp}
+ */
+export const publicECRURLPattern: RegExp =
   /^public\.ecr\.aws\/[a-z][a-z0-9]+(?:[._-][a-z0-9]+)*$/;
 
+/**
+ * Provides methods to interact with public ECR repositories.
+ */
 export class ECRPublic implements ECRProvider {
   private ecr: ECRPUBLICClient;
 
+  /**
+   * Creates an instance of ECRPublic.
+   * @param {string} region - The AWS region in which the public ECR repositories are created.
+   */
   constructor(region: string) {
     this.ecr = new ECRPUBLICClient({ region });
   }
 
+  /**
+   * Checks if the provided repository names already exist in the ECR registry and returns them as an array.
+   * @param {string[]} repoNames - An array of repository names to check for existence.
+   * @returns {Promise<string[]>} An array of repository names that already exist in the ECR registry.
+   */
   async listExistingRepositories(repoNames: string[]): Promise<string[]> {
     try {
       const existingRepositories: string[] = [];
@@ -42,11 +58,16 @@ export class ECRPublic implements ECRProvider {
       }
       return existingRepositories;
     } catch (err) {
-      Log.error(`Error checking for existing ECR repositories: ${err}`);
+      Log.error(`Error checking for existing public ECR repositories: ${err}`);
       return [];
     }
   }
 
+  /**
+   * Creates public ECR repositories for the specified repository names if they do not already exist.
+   * @param {string[]} repoNames - An array of repository names to create.
+   * @returns {Promise<void>}
+   */
   async createRepositories(repoNames: string[]): Promise<void> {
     try {
       const existingRepos = await this.listExistingRepositories(repoNames);
@@ -63,7 +84,7 @@ export class ECRPublic implements ECRProvider {
         }
       }
     } catch (err) {
-      Log.error(`Error creating ECR repositories: ${err}`);
+      Log.error(`Error creating public ECR repositories: ${err}`);
     }
   }
 }

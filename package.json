@@ -1,7 +1,7 @@
 {
   "name": "ecr",
   "version": "0.0.1",
-  "description": "Use ECR as an external Zarf registry",
+  "description": "Pepr module that creates ECR repositories to allow ECR to be used as an external Zarf registry",
   "keywords": [
     "pepr",
     "k8s",

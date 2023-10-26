@@ -3,11 +3,19 @@ import { ZarfState } from "../zarf-types";
 import { privateECRURLPattern } from "../ecr-private";
 import { publicECRURLPattern } from "../ecr-public";
 
+/**
+ * Represents the result of checking whether the Zarf registry is an ECR registry.
+ */
 interface ECRCheckResult {
-  isECR: boolean;
-  registryURL: string;
+  isECR: boolean; // Indicates if the registry is an ECR registry.
+  registryURL: string; // The URL of the ECR registry.
 }
 
+/**
+ * Check whether the configured Zarf registry is an ECR registry.
+ * @returns {Promise<ECRCheckResult>} The result of the ECR registry check.
+ * @throws {Error} If an error occurs while fetching or parsing the Zarf state secret.
+ */
 export async function isECRregistry(): Promise<ECRCheckResult> {
   let zarfState: ZarfState;
 
@@ -17,8 +25,8 @@ export async function isECRregistry(): Promise<ECRCheckResult> {
     const secretString = atob(secret.data.state);
     zarfState = JSON.parse(secretString);
   } catch (err) {
-    Log.error(
-      `Error: Failed to get package secret 'zarf-state' in namespace 'zarf': ${err}`,
+    throw new Error(
+      `Error: Failed to get secret 'zarf-state' in namespace 'zarf': ${err}`,
     );
   }
 
@@ -41,6 +49,12 @@ export async function isECRregistry(): Promise<ECRCheckResult> {
   return { isECR: false, registryURL };
 }
 
+/**
+ * Get repository names from a list of image references.
+ * @param {string[]} images - The list of image references.
+ * @returns {string[]} An array of repository names extracted from the image references.
+ * @throws {Error} If no image references are provided.
+ */
 export function getRepositoryNames(images: string[]): string[] {
   if (images.length === 0) {
     throw new Error("Error: expected at least 1 image reference, but got none");
@@ -67,6 +81,12 @@ export function getRepositoryNames(images: string[]): string[] {
   return repoNames;
 }
 
+/**
+ * Get the AWS account ID from a private ECR URL.
+ * @param {string} url - The private ECR URL.
+ * @returns {string} The AWS account ID extracted from the URL.
+ * @throws {Error} If the URL format is invalid.
+ */
 export function getAccountId(url: string): string {
   const matches = url.match(privateECRURLPattern);
 
