@@ -10,6 +10,11 @@ import { ECRProvider } from "./ecr-provider";
 
 /**
  * Regular expression pattern to match private ECR URLs and extract the AWS account ID.
+ * 
+ * See the Repository registryId pattern for more info:
+ * https://docs.aws.amazon.com/AmazonECR/latest/APIReference/API_Repository.html
+ * 
+ * For a more detailed explanation: https://regex101.com/r/crzaI2/1
  * @type {RegExp}
  */
 export const privateECRURLPattern: RegExp =
