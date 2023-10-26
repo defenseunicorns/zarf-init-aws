@@ -16,7 +16,6 @@ export interface ZarfComponent {
 }
 
 export interface DeployedComponent {
-  images: string[];
   name: string;
   observedGeneration: number;
   status: string;
