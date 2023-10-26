@@ -107,7 +107,7 @@ update-zarf-config: ## Update Zarf config file with registry type and IAM role A
 
 deploy-init-package-private: ## Run zarf init to deploy the AWS init package configured with private ECR registry
 	@cd build || exit \
-	&& ZARF_CONFIG="../zarf-config.toml" zarf init \
+	&& ZARF_CONFIG="../zarf-config.yaml" zarf init \
 		--registry-url="$$(aws sts get-caller-identity --query 'Account' --output text).dkr.ecr.us-east-1.amazonaws.com" \
         --registry-push-username="AWS" \
         --registry-push-password="$$(aws ecr get-login-password --region us-east-1)" \
@@ -122,7 +122,7 @@ delete-private-repos: ## Delete private ECR repos created by deploying the AWS i
 
 deploy-init-package-public: ## Run zarf init to deploy the AWS init package configured with public ECR registry
 	@cd build || exit \
-	&& ZARF_CONFIG="../zarf-config.toml" zarf init \
+	&& ZARF_CONFIG="../zarf-config.yaml" zarf init \
 		--registry-url="$$(aws ecr-public describe-registries --query 'registries[0].registryUri' --output text --region us-east-1)" \
         --registry-push-username="AWS" \
         --registry-push-password="$$(aws ecr-public get-login-password --region us-east-1)" \

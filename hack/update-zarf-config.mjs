@@ -1,12 +1,7 @@
 import { readFile, writeFile } from "fs";
+import { parse, stringify} from "yaml";
 
-const filePath = "../zarf-config.toml";
-
-// Config file keys
-const registryType = "registry_type";
-const ecrWebhookRoleArn = "ecr_hook_role_arn";
-const ecrCredentialHelperRoleArn = "ecr_credential_helper_role_arn";
-
+const filePath = "../zarf-config.yaml";
 const args = process.argv.slice(2);
 
 // Validate registry type input
@@ -25,37 +20,25 @@ if (!args[2]) {
   process.exit(1);
 }
 
-readFile(filePath, "utf8", (err, data) => {
+readFile(filePath, "utf8", (err, configData) => {
   if (err) {
     console.error(err);
-    return;
+    process.exit(1);
   }
 
+  const parsedConfig = parse(configData)
+
   // Update Zarf config file values
-  const pattern = `\\s*=\\s*['"].*['"]`
+  parsedConfig.package.deploy.set.registry_type = args[0]
+  parsedConfig.package.deploy.set.ecr_hook_role_arn = args[1]
+  parsedConfig.package.deploy.set.ecr_credential_helper_role_arn = args[2]
 
-  let updatedConfig = data;
-
-  updatedConfig = updatedConfig.replace(
-    new RegExp(`${registryType}${pattern}`),
-    `${registryType} = '${args[0]}'`
-  );
-
-  updatedConfig = updatedConfig.replace(
-    new RegExp(`${ecrWebhookRoleArn}${pattern}`),
-    `${ecrWebhookRoleArn} = '${args[1]}'`
-  );
-
-  updatedConfig = updatedConfig.replace(
-    new RegExp(`${ecrCredentialHelperRoleArn}${pattern}`),
-    `${ecrCredentialHelperRoleArn} = '${args[2]}'`
-  );
-
-  writeFile(filePath, updatedConfig, "utf8", (err) => {
+  writeFile(filePath, stringify(parsedConfig), "utf8", (err) => {
     if (err) {
       console.error(err);
-      return;
+      process.exit(1);
     }
-    console.log("Zarf config file updated successfully.");
   });
+
+  console.log("Zarf config file updated successfully.");
 });
