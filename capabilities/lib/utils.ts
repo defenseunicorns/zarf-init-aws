@@ -1,52 +1,70 @@
-import { K8s, kind, Log } from "pepr";
-import { ZarfState } from "../zarf-types";
-import { privateECRURLPattern } from "../ecr-private";
-import { publicECRURLPattern } from "../ecr-public";
+import { K8s, kind, Log, a } from "pepr";
+import { createRepos } from "./ecr";
+import {
+  ZarfComponent,
+  DeployedComponent,
+  DeployedPackage,
+} from "../zarf-types";
 
 /**
- * Represents the result of checking whether the Zarf registry is an ECR registry.
+ * Represents a component check result, indicating whether a component is ready for a webhook to execute.
  */
-interface ECRCheckResult {
-  isECR: boolean; // Indicates if the registry is an ECR registry.
-  registryURL: string; // The URL of the ECR registry.
+interface componentCheck {
+  component: ZarfComponent;
+  deployedComponent: DeployedComponent;
+  isReady: boolean;
 }
 
 /**
- * Check whether the configured Zarf registry is an ECR registry.
- * @returns {Promise<ECRCheckResult>} The result of the ECR registry check.
- * @throws {Error} If an error occurs while fetching or parsing the Zarf state secret.
+ * Checks if a component is ready for a webhook to execute for it.
+ * @param {DeployedPackage} deployedPackage - The Zarf deployed package data to check.
+ * @param {string} webhookName - The name of the webhook.
+ * @returns {componentCheck | null} A component check result or null if no components meet the criteria.
  */
-export async function isECRregistry(): Promise<ECRCheckResult> {
-  let zarfState: ZarfState;
+export function componentReadyForWebhook(
+  deployedPackage: DeployedPackage,
+  webhookName: string,
+): componentCheck | null {
+  // Create a map of components by name
+  const componentsByName = new Map<string, ZarfComponent>();
+  deployedPackage.data.components.forEach(component => {
+    componentsByName.set(component.name, component);
+  });
 
-  // Fetch the Zarf state secret
-  try {
-    const secret = await K8s(kind.Secret).InNamespace("zarf").Get("zarf-state");
-    const secretString = atob(secret.data.state);
-    zarfState = JSON.parse(secretString);
-  } catch (err) {
-    throw new Error(
-      `Error: Failed to get secret 'zarf-state' in namespace 'zarf': ${err}`,
-    );
+  for (const deployedComponent of deployedPackage.deployedComponents) {
+    const component = componentsByName.get(deployedComponent.name);
+
+    if (!component) {
+      continue;
+    }
+    if (!component.images) {
+      continue;
+    }
+    if (deployedComponent.status !== "Deploying") {
+      continue;
+    }
+
+    const componentWebhook =
+      deployedPackage.componentWebhooks?.[deployedComponent.name]?.[
+        webhookName
+      ];
+
+    // Check if the component has a webhook running for the current package generation
+    if (componentWebhook?.observedGeneration === deployedPackage.generation) {
+      Log.debug(
+        `The component '${deployedComponent.name}' has already had a webhook executed for it. Not executing another.`,
+      );
+      continue;
+    }
+
+    return {
+      component: component,
+      deployedComponent: deployedComponent,
+      isReady: true,
+    };
   }
 
-  const registryURL = zarfState.registryInfo.address;
-
-  if (zarfState.registryInfo.internalRegistry === true) {
-    Log.warn(
-      "Zarf is configured to use an internal registry. Skipping creating ECR repos.",
-    );
-    return { isECR: false, registryURL };
-  }
-
-  if (
-    publicECRURLPattern.test(registryURL) ||
-    privateECRURLPattern.test(registryURL)
-  ) {
-    return { isECR: true, registryURL };
-  }
-
-  return { isECR: false, registryURL };
+  return null;
 }
 
 /**
@@ -82,19 +100,117 @@ export function getRepositoryNames(images: string[]): string[] {
 }
 
 /**
- * Get the AWS account ID from a private ECR URL.
- * @param {string} url - The private ECR URL.
- * @returns {string} The AWS account ID extracted from the URL.
- * @throws {Error} If the URL format is invalid.
+ * Creates ECR repositories and updates webhook status in a Zarf package secret.
+ * @param {DeployedComponent} deployedComponent - The deployed component for which repositories should be created.
+ * @param {string} registryURL - The URL of the ECR registry.
+ * @param {string} secretName - The name of the secret to update.
+ * @param {string} webhookName - The name of the webhook.
+ * @param {ZarfComponent} zarfComponent - The corresponding Zarf component.
  */
-export function getAccountId(url: string): string {
-  const matches = url.match(privateECRURLPattern);
+export async function createReposAndUpdateStatus(
+  deployedComponent: DeployedComponent,
+  registryURL: string,
+  secretName: string,
+  webhookName: string,
+  zarfComponent: ZarfComponent,
+): Promise<void> {
+  let webhookStatus = "Succeeded";
 
-  if (!matches || matches.length !== 2) {
-    throw new Error(`Invalid private ECR URL format: ${url}`);
+  try {
+    await createRepos(deployedComponent, zarfComponent, registryURL);
+  } catch (err) {
+    Log.error(`Failed to create ECR repositories: ${err.message}`);
+    webhookStatus = "Failed";
+  } finally {
+    await updateWebhookStatus(
+      secretName,
+      deployedComponent.name,
+      webhookName,
+      webhookStatus,
+    );
+  }
+}
+
+/**
+ * Updates the webhook status in a Zarf package secret.
+ * @param {string} secretName - The name of the secret to update.
+ * @param {string} componentName - The name of the component for which the webhook executed.
+ * @param {string} webhookName - The name of the webhook.
+ * @param {string} status - The new status for the webhook.
+ */
+export async function updateWebhookStatus(
+  secretName: string,
+  componentName: string,
+  webhookName: string,
+  status: string,
+): Promise<void> {
+  const ns = "zarf";
+
+  let secret: a.Secret;
+  let secretString: string;
+  let deployedPackage: DeployedPackage;
+  let manuallyDecoded = false;
+
+  // Fetch the package secret
+  try {
+    secret = await K8s(kind.Secret).InNamespace(ns).Get(secretName);
+  } catch (err) {
+    Log.error(
+      `Error: Failed to get package secret '${secretName}' in namespace '${ns}': ${JSON.stringify(
+        err,
+      )}`,
+    );
   }
 
-  const [, accountId] = matches;
+  try {
+    secretString = atob(secret.data.data);
+    manuallyDecoded = true;
+  } catch (err) {
+    secretString = secret.data.data;
+  }
 
-  return accountId;
+  try {
+    deployedPackage = JSON.parse(secretString);
+  } catch (err) {
+    Log.error(`Failed to parse the secret data: ${err.message}`);
+  }
+
+  const componentWebhook =
+    deployedPackage.componentWebhooks?.[componentName][webhookName];
+
+  // Update the webhook status if the observedGeneration matches
+  if (componentWebhook?.observedGeneration === deployedPackage.generation) {
+    componentWebhook.status = status;
+    deployedPackage.componentWebhooks[componentName][webhookName] =
+      componentWebhook;
+  }
+
+  if (manuallyDecoded === true) {
+    secret.data.data = btoa(JSON.stringify(deployedPackage));
+  } else {
+    secret.data.data = JSON.stringify(deployedPackage);
+  }
+
+  // Use Server-Side force apply to forcefully take ownership of the package secret data.data field
+  // Doing a Server-Side apply without the force option will result in a FieldManagerConflict error due to Zarf owning the object.
+  try {
+    await K8s(kind.Secret).Apply(
+      {
+        metadata: {
+          name: secretName,
+          namespace: ns,
+        },
+        data: {
+          data: secret.data.data,
+        },
+      },
+      { force: true },
+    );
+  } catch (err) {
+    throw new Error(
+      `Error: Failed to update package secret '${secretName}' in namespace '${ns}': ${JSON.stringify(
+        err,
+      )}`,
+    );
+  }
 }
