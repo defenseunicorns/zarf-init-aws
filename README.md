@@ -14,7 +14,7 @@ Zarf eliminates the [complexity of air gap software delivery](https://www.itopst
 
 ## Zarf Init Package for AWS
 
-This repository contains the Zarf init package for AWS that uses the [Amazon Elastic Container Registry (ECR)](https://aws.amazon.com/ecr/) as an OCI registry and deploys onto the [Amazon Elastic Kubernetes Service (EKS)](https://aws.amazon.com/eks/) platform.
+This repository contains the Zarf init package for AWS that uses [ECR](https://aws.amazon.com/ecr/) as an OCI registry and deploys onto [EKS](https://aws.amazon.com/eks/).
 
 ## Usage
 
