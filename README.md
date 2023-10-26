@@ -54,28 +54,31 @@ zarf package pull oci://ghcr.io/defenseunicorns/packages/init-aws:v0.0.1-amd64
 
 #### Use ***private*** ECR registry
 
-1. Create a Zarf config file `zarf-config.toml`
+1. Create a Zarf config file `zarf-config.yaml`
 
-    ```toml
-    architecture = 'amd64'
+    ```yaml
+    architecture: amd64
 
-    [package.deploy]
-    components = 'zarf-ecr-credential-helper'
+    package:
+      deploy:
+        components: zarf-ecr-credential-helper
 
-    [package.deploy.set]
-    registry_type = 'private'
+    package:
+      deploy:
+        set:
+          registry_type: private
 
-    # Change me to your AWS region if needed
-    aws_region = 'us-east-1'
+          # Change me to your AWS region if needed
+          aws_region: us-east-1
 
-    # Set IAM role ARNs
-    ecr_hook_role_arn = '<YOUR_WEBHOOK_ROLE_ARN>'
-    ecr_credential_helper_role_arn = '<YOUR_CREDENTIAL_HELPER_ROLE_ARN>'
+          # Set IAM role ARNs
+          ecr_hook_role_arn: <YOUR_WEBHOOK_ROLE_ARN>
+          ecr_credential_helper_role_arn: <YOUR_CREDENTIAL_HELPER_ROLE_ARN>
     ```
 
 1. Zarf init
 
-    Note: Be sure to run the `zarf init` command from the same working directory as your Zarf config file
+    Note: Be sure to run the `zarf init` command from the same working directory as your Zarf config file or set the `ZARF_CONFIG` environment variable to point to your config file.
 
     ```bash
     AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query 'Account' --output text)
@@ -90,29 +93,32 @@ zarf package pull oci://ghcr.io/defenseunicorns/packages/init-aws:v0.0.1-amd64
 
 #### Use ***public*** ECR registry
 
-1. Create a Zarf config file `zarf-config.toml`
+1. Create a Zarf config file `zarf-config.yaml`
 
-    ```toml
-    architecture = 'amd64'
+    ```yaml
+    architecture: amd64
 
-    [package.deploy]
-    components = 'zarf-ecr-credential-helper'
+    package:
+      deploy:
+        components: zarf-ecr-credential-helper
 
-    [package.deploy.set]
-    registry_type = 'public'
+    package:
+      deploy:
+        set:
+          registry_type: public
 
-    # Must use us-east-1 region for public ECR registries:
-    # https://docs.aws.amazon.com/AmazonECR/latest/public/public-registries.html#public-registry-auth
-    aws_region = 'us-east-1'
+          # Must use us-east-1 region for public ECR registries
+          # https://docs.aws.amazon.com/AmazonECR/latest/public/public-registries.html#public-registry-auth
+          aws_region: us-east-1
 
-    # Set IAM role ARNs
-    ecr_hook_role_arn = '<YOUR_WEBHOOK_ROLE_ARN>'
-    ecr_credential_helper_role_arn = '<YOUR_CREDENTIAL_HELPER_ROLE_ARN>'
+          # Set IAM role ARNs
+          ecr_hook_role_arn: <YOUR_WEBHOOK_ROLE_ARN>
+          ecr_credential_helper_role_arn: <YOUR_CREDENTIAL_HELPER_ROLE_ARN>
     ```
 
 1. Zarf init
 
-    Note: Be sure to run the `zarf init` command from the same working directory as your Zarf config file
+    Note: Be sure to run the `zarf init` command from the same working directory as your Zarf config file or set the `ZARF_CONFIG` environment variable to point to your config file.
 
     ```bash
     zarf init \
