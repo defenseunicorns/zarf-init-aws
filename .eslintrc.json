@@ -17,7 +17,8 @@
   "ignorePatterns": [
     "node_modules",
     "dist",
-    "hack"
+    "hack",
+    "build"
   ],
   "root": true
 }
