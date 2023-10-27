@@ -152,5 +152,9 @@ delete-public-repos: ## Delete public ECR repos created by deploying the AWS ini
 test-cves:
 	zarf tools sbom packages --exclude './binaries' . -o json | grype --fail-on low
 
-cve-report: ## Create a CVE report for the current project (must `brew install grype` first)
+# INTERNAL: used to ensure the build directory exists
+ensure-build-dir:
+	mkdir -p build
+
+cve-report: ensure-build-dir ## Create a CVE report for the current project (must `brew install grype` first)
 	zarf tools sbom packages --exclude './binaries' . -o json | grype -o template -t hack/.templates/grype.tmpl > build/zarf-known-cves.csv
