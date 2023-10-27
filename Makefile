@@ -103,7 +103,7 @@ delete-iam: ## Delete AWS IAM policies and roles used in CI
 
 update-zarf-config: ## Update Zarf config file with registry type and IAM role ARN values
 	@cd iam || exit \
-	&& node ../hack/update-zarf-config.mjs "$(REGISTRY_TYPE)" "$$(PULUMI_CONFIG_PASSPHRASE="" pulumi stack output webhookRoleArn)" "$$(PULUMI_CONFIG_PASSPHRASE="" pulumi stack output credentialHelperRoleArn)"
+	&& node ../hack/update-zarf-config/index.mjs "$(REGISTRY_TYPE)" "$$(PULUMI_CONFIG_PASSPHRASE="" pulumi stack output webhookRoleArn)" "$$(PULUMI_CONFIG_PASSPHRASE="" pulumi stack output credentialHelperRoleArn)"
 
 deploy-init-package-private: ## Run zarf init to deploy the AWS init package configured with private ECR registry
 	@cd build || exit \
