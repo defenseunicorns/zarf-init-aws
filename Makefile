@@ -42,6 +42,12 @@ build-module: ## Build the ECR Pepr module
 test-module: ## Test the ECR Pepr module
 	npm run unit-test
 
+# Run "npm ci" in each directory containing a "package.json" file
+install-node-deps:
+	npm ci;
+	cd iam && npm ci;
+	cd hack/update-zarf-config && npm ci;
+
 # Note: the path to the main.go file is not used due to https://github.com/golang/go/issues/51831#issuecomment-1074188363
 build-credential-helper-linux-amd: ## Build the ECR credential helper binary for Linux on AMD64
 	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o ./build/zarf-ecr-credential-helper

@@ -111,11 +111,10 @@ jobs:
         with:
           node-version: 20
           cache: "npm"
-          cache-dependency-path: "iam/package-lock.json"
+          cache-dependency-path: "**/package-lock.json"
 
-      - name: Install Node dependencies
-        working-directory: iam
-        run: npm ci
+      - name: Install Node deps for every package.json in the repo
+        run: make install-node-deps
 
       - name: Deploy EKS package
         run: make deploy-eks-package CLUSTER_NAME="$CLUSTER_NAME" INSTANCE_TYPE=${{ inputs.instance_type }}
@@ -180,11 +179,10 @@ jobs:
         with:
           node-version: 20
           cache: "npm"
-          cache-dependency-path: "iam/package-lock.json"
+          cache-dependency-path: "**/package-lock.json"
 
-      - name: Install Node dependencies
-        working-directory: iam
-        run: npm ci
+      - name: Install Node deps for every package.json in the repo
+        run: make install-node-deps
 
       - name: Deploy EKS package
         run: make deploy-eks-package CLUSTER_NAME="$CLUSTER_NAME" INSTANCE_TYPE=${{ inputs.instance_type }}
