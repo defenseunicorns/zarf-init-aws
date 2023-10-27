@@ -1,5 +1,5 @@
 import { readFile, writeFile } from "fs";
-import { parse, stringify} from "yaml";
+import { parseDocument } from "yaml";
 
 const filePath = "../zarf-config.yaml";
 const args = process.argv.slice(2);
@@ -26,19 +26,24 @@ readFile(filePath, "utf8", (err, configData) => {
     process.exit(1);
   }
 
-  const parsedConfig = parse(configData)
+  const parsedConfig = parseDocument(configData);
 
   // Update Zarf config file values
-  parsedConfig.package.deploy.set.registry_type = args[0]
-  parsedConfig.package.deploy.set.ecr_hook_role_arn = args[1]
-  parsedConfig.package.deploy.set.ecr_credential_helper_role_arn = args[2]
+  if (parsedConfig.has("package") && parsedConfig.get("package").has("deploy")) {
+    let deployVars = parsedConfig.get("package").get("deploy").get("set")
+    deployVars.set("registry_type", args[0]);
+    deployVars.set("ecr_hook_role_arn", args[1]);
+    deployVars.set("ecr_credential_helper_role_arn", args[2]);
+  }
 
-  writeFile(filePath, stringify(parsedConfig), "utf8", (err) => {
+  const updatedConfig = parsedConfig.toString();
+
+  writeFile(filePath, updatedConfig, "utf8", (err) => {
     if (err) {
       console.error(err);
       process.exit(1);
     }
-  });
 
-  console.log("Zarf config file updated successfully.");
+    console.log("Zarf config file updated successfully.");
+  });
 });
