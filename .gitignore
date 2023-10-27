@@ -3,7 +3,8 @@ dist
 insecure*
 coverage
 build
-Pulumi.**.yaml
+Pulumi.**.y*ml
 binaries
 eks.yaml
 **.tar.zst
+zarf-config.y*ml

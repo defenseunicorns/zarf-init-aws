@@ -57,7 +57,7 @@ build-local-credential-helper-image: ## Build the ECR credential helper image to
 	docker buildx build --load --platform linux/$(ARCH) --tag ghcr.io/defenseunicorns/zarf-init-aws/ecr-credential-helper:local .
 
 aws-init-package: ## Build the AWS Zarf init package
-	zarf package create -o build -a $(ARCH) --confirm .
+	ZARF_CONFIG="zarf-config.example.yaml" zarf package create -o build -a $(ARCH) --confirm .
 
 # INTERNAL: used to build a release version of the AWS init package with a specific credential-helper image
 release-aws-init-package:
@@ -107,7 +107,7 @@ delete-iam: ## Delete AWS IAM policies and roles used in CI
 	&& PULUMI_CONFIG_PASSPHRASE="" pulumi down --yes \
 	&& PULUMI_CONFIG_PASSPHRASE="" pulumi stack rm ci --yes
 
-update-zarf-config: ## Update Zarf config file with registry type and IAM role ARN values
+update-zarf-config: ## Generate a new Zarf config file with registry type and IAM role ARN values to use for 'zarf init'
 	@cd iam || exit \
 	&& node ../hack/update-zarf-config/index.mjs "$(REGISTRY_TYPE)" "$$(PULUMI_CONFIG_PASSPHRASE="" pulumi stack output webhookRoleArn)" "$$(PULUMI_CONFIG_PASSPHRASE="" pulumi stack output credentialHelperRoleArn)"
 

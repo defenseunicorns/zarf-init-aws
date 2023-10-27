@@ -1,7 +1,8 @@
 import { readFile, writeFile } from "fs";
 import { parseDocument } from "yaml";
 
-const filePath = "../zarf-config.yaml";
+const exampleFilePath = "../zarf-config.example.yaml";
+const updatedFilePath = "../zarf-config.yaml"
 const args = process.argv.slice(2);
 
 // Validate registry type input
@@ -20,7 +21,7 @@ if (!args[2]) {
   process.exit(1);
 }
 
-readFile(filePath, "utf8", (err, configData) => {
+readFile(exampleFilePath, "utf8", (err, configData) => {
   if (err) {
     console.error(err);
     process.exit(1);
@@ -38,7 +39,7 @@ readFile(filePath, "utf8", (err, configData) => {
 
   const updatedConfig = parsedConfig.toString();
 
-  writeFile(filePath, updatedConfig, "utf8", (err) => {
+  writeFile(updatedFilePath, updatedConfig, "utf8", (err) => {
     if (err) {
       console.error(err);
       process.exit(1);
