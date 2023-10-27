@@ -1,0 +1,3 @@
+ignore:
+  # From Pulumi's tests - This is only used for development
+  - vulnerability: GHSA-m425-mq94-257g
