@@ -42,11 +42,18 @@ build-module: ## Build the ECR Pepr module
 test-module: ## Test the ECR Pepr module
 	npm run unit-test
 
-# Run "npm ci" in each directory containing a "package.json" file
-install-node-deps:
+install-node-deps: # Run "npm ci" in each directory containing a "package.json" file
 	npm ci;
 	cd iam && npm ci;
 	cd hack/update-zarf-config && npm ci;
+
+gen-schema: ## Generate TypeScript interfaces from Zarf structs
+	hack/gen-schema/gen-schema.sh
+
+# INTERNAL: used to test that a dev has ran `make gen-schema` in their PR
+test-gen-schema:
+	$(MAKE) gen-schema
+	hack/gen-schema/check-gen-schema.sh
 
 # Note: the path to the main.go file is not used due to https://github.com/golang/go/issues/51831#issuecomment-1074188363
 build-credential-helper-linux-amd: ## Build the ECR credential helper binary for Linux on AMD64

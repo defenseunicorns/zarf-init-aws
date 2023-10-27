@@ -18,7 +18,8 @@
     "node_modules",
     "dist",
     "hack",
-    "build"
+    "build",
+    "capabilities/zarf-types.ts"
   ],
   "root": true
 }
