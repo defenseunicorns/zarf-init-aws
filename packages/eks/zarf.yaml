@@ -23,7 +23,7 @@ variables:
     default: "1.27"
 
   - name: EBS_DRIVER_VERSION
-    description: The AEBS driver version to use for the cluster (must be available on the K8s version)
+    description: The EBS driver version to use for the cluster (must be available on the K8s version)
     default: "v1.24.0"
 
 components:

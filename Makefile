@@ -7,7 +7,7 @@ ZARF_VERSION ?= $$(zarf version)
 CREDENTIAL_HELPER_BIN := ./build/zarf-ecr-credential-helper
 CLUSTER_NAME ?= ""
 INSTANCE_TYPE ?= t3.small
-EKS_PACKAGE := ./build/zarf-package-distro-eks-multi-0.0.4.tar.zst
+EKS_PACKAGE := ./build/zarf-package-distro-eks-multi-0.0.5.tar.zst
 REGISTRY_TYPE ?= ""
 ######################################################################################
 
