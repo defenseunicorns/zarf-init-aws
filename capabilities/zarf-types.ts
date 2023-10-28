@@ -8,8 +8,8 @@
 // match the expected interface, even if the JSON is valid.
 
 export interface ZarfTypes {
-    deployedPackage: DeployedPackage;
-    zarfState:       ZarfState;
+    DeployedPackage: DeployedPackage;
+    ZarfState:       ZarfState;
 }
 
 export interface DeployedPackage {
@@ -1159,8 +1159,8 @@ function r(name: string) {
 
 const typeMap: any = {
     "ZarfTypes": o([
-        { json: "deployedPackage", js: "deployedPackage", typ: r("DeployedPackage") },
-        { json: "zarfState", js: "zarfState", typ: r("ZarfState") },
+        { json: "DeployedPackage", js: "DeployedPackage", typ: r("DeployedPackage") },
+        { json: "ZarfState", js: "ZarfState", typ: r("ZarfState") },
     ], false),
     "DeployedPackage": o([
         { json: "cliVersion", js: "cliVersion", typ: "" },
