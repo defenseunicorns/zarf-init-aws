@@ -1,3 +1,4 @@
+// Package main generates a JSON schema from Zarf types and prints it to stdout
 package main
 
 import (
@@ -9,13 +10,13 @@ import (
 	"github.com/defenseunicorns/zarf/src/types"
 )
 
-type ZarfTypes struct {
+type zarfTypes struct {
 	DeployedPackage types.DeployedPackage
 	ZarfState       types.ZarfState
 }
 
 func main() {
-	schema := jsonschema.Reflect(&ZarfTypes{})
+	schema := jsonschema.Reflect(&zarfTypes{})
 	output, err := json.MarshalIndent(schema, "", "  ")
 	if err != nil {
 		fmt.Printf("unable to generate the JSON schema from the Zarf types: %v\n", err)
