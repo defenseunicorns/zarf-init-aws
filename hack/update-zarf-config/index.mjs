@@ -31,7 +31,7 @@ readFile(exampleFilePath, "utf8", (err, configData) => {
 
   // Update Zarf config file values
   if (parsedConfig.has("package") && parsedConfig.get("package").has("deploy")) {
-    let deployVars = parsedConfig.get("package").get("deploy").get("set")
+    const deployVars = parsedConfig.get("package").get("deploy").get("set")
     deployVars.set("registry_type", args[0]);
     deployVars.set("ecr_hook_role_arn", args[1]);
     deployVars.set("ecr_credential_helper_role_arn", args[2]);
