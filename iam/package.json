@@ -6,6 +6,7 @@
     },
     "dependencies": {
         "@pulumi/aws": "^6.6.1",
-        "@pulumi/pulumi": "^3.91.0"
+        "@pulumi/pulumi": "^3.91.0",
+        "handlebars": "^4.7.8"
     }
 }

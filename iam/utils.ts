@@ -1,6 +1,7 @@
 import { iam, getCallerIdentity } from "@pulumi/aws";
 import { getCluster } from "@pulumi/aws/eks";
 import { readFileSync } from "fs";
+import { compile } from "handlebars";
 
 export function createPolicy(file: string, policyName: string) {
   const policy = readFileSync(file, "utf8");
@@ -16,16 +17,14 @@ export function createRole(
   clusterId: string,
 ) {
   const placeholderRole = readFileSync(file, "utf8");
+  const template = compile(placeholderRole)
+  
+  const updatedPlaceholders = {
+    AWS_ACCOUNT_ID: accountId,
+    EKS_CLUSTER_ID: clusterId,
+  }
 
-  const partiallyUpdatedRole = placeholderRole.replace(
-    new RegExp("{{AWS_ACCOUNT_ID}}", "g"),
-    accountId,
-  );
-
-  const updatedRole = partiallyUpdatedRole.replace(
-    new RegExp("{{EKS_CLUSTER_ID}}", "g"),
-    clusterId,
-  );
+  const updatedRole = template(updatedPlaceholders)
 
   return new iam.Role(roleName, {
     assumeRolePolicy: updatedRole,
