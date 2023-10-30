@@ -1,3 +1,6 @@
+// This script reads zarf-config.example.yaml, adds the registry type and IAM role ARNs, and writes a new zarf-config.yaml file to be used for running zarf init.
+// Execute this script via: `make update-zarf-config REGISTRY_TYPE=public|private`
+// Assumes IAM roles already exist and were created via `make create-iam CLUSTER_NAME=my-cluster-name`
 import { readFile, writeFile } from "fs";
 import { parseDocument } from "yaml";
 
