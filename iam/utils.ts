@@ -17,14 +17,14 @@ export function createRole(
   clusterId: string,
 ) {
   const placeholderRole = readFileSync(file, "utf8");
-  const template = compile(placeholderRole)
-  
+  const template = compile(placeholderRole);
+
   const updatedPlaceholders = {
     AWS_ACCOUNT_ID: accountId,
     EKS_CLUSTER_ID: clusterId,
-  }
+  };
 
-  const updatedRole = template(updatedPlaceholders)
+  const updatedRole = template(updatedPlaceholders);
 
   return new iam.Role(roleName, {
     assumeRolePolicy: updatedRole,
