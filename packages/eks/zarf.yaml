@@ -16,7 +16,7 @@ variables:
 
   - name: EKS_CLUSTER_REGION
     description: The AWS region to setup the cluster and associated networking
-    default: us-east-1
+    default: us-west-2
 
   - name: EKS_CLUSTER_VERSION
     description: The Kubernetes version to use for the cluster
