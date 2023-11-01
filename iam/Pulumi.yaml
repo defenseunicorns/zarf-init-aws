@@ -1,3 +1,5 @@
 name: iam
 runtime: nodejs
 description: IaC to provision IAM resources for IRSA authentication in CI
+config:
+  aws:region: us-west-2
