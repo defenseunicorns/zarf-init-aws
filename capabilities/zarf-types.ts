@@ -92,11 +92,6 @@ export interface ZarfBuildData {
      */
     migrations?: string[];
     /**
-     * Map of components that were imported via OCI. The keys are OCI Package URLs and values
-     * are the component names
-     */
-    OCIImportedComponents?: { [key: string]: string };
-    /**
      * Any registry domains that were overridden on package create when pulling images
      */
     registryOverrides?: { [key: string]: string };
@@ -154,7 +149,7 @@ export interface ZarfComponent {
     files?: ZarfFile[];
     /**
      * [Deprecated] Create a user selector field based on all components in the same group. This
-     * will be removed in Zarf v1.0.0.
+     * will be removed in Zarf v1.0.0. Consider using 'only.flavor' instead.
      */
     group?: string;
     /**
@@ -645,6 +640,11 @@ export interface ZarfComponentOnlyTarget {
      * Only deploy component to specified clusters
      */
     cluster?: ZarfComponentOnlyCluster;
+    /**
+     * Only include this component when a matching '--flavor' is specified on 'zarf package
+     * create'
+     */
+    flavor?: string;
     /**
      * Only deploy component to specified OS
      */
@@ -1195,7 +1195,6 @@ const typeMap: any = {
         { json: "differentialMissing", js: "differentialMissing", typ: u(undefined, a("")) },
         { json: "lastNonBreakingVersion", js: "lastNonBreakingVersion", typ: u(undefined, "") },
         { json: "migrations", js: "migrations", typ: u(undefined, a("")) },
-        { json: "OCIImportedComponents", js: "OCIImportedComponents", typ: u(undefined, m("")) },
         { json: "registryOverrides", js: "registryOverrides", typ: u(undefined, m("")) },
         { json: "terminal", js: "terminal", typ: "" },
         { json: "timestamp", js: "timestamp", typ: "" },
@@ -1336,6 +1335,7 @@ const typeMap: any = {
     ], false),
     "ZarfComponentOnlyTarget": o([
         { json: "cluster", js: "cluster", typ: u(undefined, r("ZarfComponentOnlyCluster")) },
+        { json: "flavor", js: "flavor", typ: u(undefined, "") },
         { json: "localOS", js: "localOS", typ: u(undefined, r("LocalOS")) },
     ], false),
     "ZarfComponentOnlyCluster": o([
