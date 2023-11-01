@@ -56,7 +56,7 @@ components:
           - cmd: ./binaries/eksctl_$(uname -s)_$(uname -m) create cluster --dry-run -f eks.yaml
           - cmd: sleep 15
           - cmd: ./binaries/eksctl_$(uname -s)_$(uname -m) create cluster -f eks.yaml
-          - cmd: ./binaries/eksctl_$(uname -s)_$(uname -m) utils write-kubeconfig -c ${ZARF_VAR_EKS_CLUSTER_NAME}
+          - cmd: ./binaries/eksctl_$(uname -s)_$(uname -m) utils write-kubeconfig -c ${ZARF_VAR_EKS_CLUSTER_NAME} -r ${ZARF_VAR_EKS_CLUSTER_REGION}
       onRemove:
         before:
           # NOTE: This onRemove action assumes the presence of an eksctl binary in a 'binaries' directory from where 'zarf package remove' was ran.
