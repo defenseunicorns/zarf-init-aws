@@ -68,7 +68,7 @@ aws-init-package: ## Build the AWS Zarf init package
 
 # INTERNAL: used to build a release version of the AWS init package with a specific credential-helper image
 release-aws-init-package:
-	zarf package create -o build -a $(ARCH) --set CREDENTIAL_HELPER_IMAGE_TAG=$(CREDENTIAL_HELPER_IMAGE_TAG) --confirm .
+	ZARF_CONFIG="zarf-config.example.yaml" zarf package create -o build -a $(ARCH) --set CREDENTIAL_HELPER_IMAGE_TAG=$(CREDENTIAL_HELPER_IMAGE_TAG) --confirm .
 
 # INTERNAL: used to publish the AWS init package
 publish-aws-init-package:
