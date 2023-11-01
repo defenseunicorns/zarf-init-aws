@@ -69,6 +69,15 @@ export function componentReadyForWebhook(
 
 /**
  * Get repository names from a list of image references.
+ *
+ * Extracts the substring between the tag/SHA and the domain name if present.
+ *
+ * Example:
+ *
+ * Input: registry.com:8080/repo/name:tag
+ *
+ * Output: repo/name
+ *
  * @param {string[]} images - The list of image references.
  * @returns {string[]} An array of repository names extracted from the image references.
  * @throws {Error} If no image references are provided.
@@ -79,24 +88,51 @@ export function getRepositoryNames(images: string[]): string[] {
   }
 
   const repoNames = images.map((image: string) => {
-    if (image.includes(":") && !image.includes("@sha256")) {
-      image = image.split(":")[0];
-    } else if (image.includes("@sha256")) {
-      image = image.split("@sha256")[0];
-    }
+    let repoName = image;
 
-    const firstSlashIndex = image.indexOf("/");
-    if (firstSlashIndex !== -1) {
-      const substringBeforeSlash = image.substring(0, firstSlashIndex);
-      if (substringBeforeSlash.includes(".")) {
-        image = image.substring(firstSlashIndex + 1);
+    // Remove the domain name (and port) if present
+    const firstSlashIndex = repoName.indexOf("/");
+    if (substringFound(firstSlashIndex) === true) {
+      // Check if the substring before the first slash '/' contains a dot '.' or a colon ':'
+      // indicating a domain or port number. If so, remove that part.
+      const substringBeforeSlash = repoName.substring(0, firstSlashIndex);
+      if (
+        substringBeforeSlash.includes(".") ||
+        substringBeforeSlash.includes(":")
+      ) {
+        repoName = repoName.substring(firstSlashIndex + 1);
       }
     }
 
-    return image;
+    // Remove the hash (SHA) if present
+    const hashIndex = repoName.lastIndexOf("@");
+    if (substringFound(hashIndex) === true) {
+      repoName = repoName.substring(0, hashIndex);
+    }
+
+    // Remove the tag if present
+    const tagIndex = repoName.lastIndexOf(":");
+    if (substringFound(tagIndex) === true) {
+      repoName = repoName.substring(0, tagIndex);
+    }
+
+    return repoName;
   });
 
   return repoNames;
+}
+
+/**
+ * Checks if a substring is found at a specified index.
+ *
+ * @param {number} index - The index to check. If the index is -1, the substring was not found.
+ * @returns {boolean} True if a substring was found at the specified index, false otherwise.
+ */
+function substringFound(index: number): boolean {
+  if (index === -1) {
+    return false;
+  }
+  return true;
 }
 
 /**
