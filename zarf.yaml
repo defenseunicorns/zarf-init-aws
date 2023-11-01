@@ -2,7 +2,6 @@ kind: ZarfInitConfig
 metadata:
   name: init-aws
   description: "Zarf Init Package that uses ECR as an external Zarf registry"
-  version: 0.0.1
   url: https://github.com/defenseunicorns/zarf-init-aws
 
 constants:
