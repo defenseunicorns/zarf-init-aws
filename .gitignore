@@ -8,3 +8,4 @@ binaries
 eks.yaml
 **.tar.zst
 zarf-config.y*ml
+zarf-sbom
