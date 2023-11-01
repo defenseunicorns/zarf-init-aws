@@ -47,7 +47,7 @@ This repository contains the Zarf init package for AWS that uses [ECR](https://a
 ### Get the Zarf init package
 
 ```bash
-zarf package pull oci://ghcr.io/defenseunicorns/packages/init-aws:v0.0.1-amd64
+zarf package pull oci://ghcr.io/defenseunicorns/packages/init-aws:$(zarf version)-amd64
 ```
 
 ### Initialize EKS cluster with Zarf configured to use ECR as external registry
