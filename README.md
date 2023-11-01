@@ -62,9 +62,6 @@ zarf package pull oci://ghcr.io/defenseunicorns/packages/init-aws:v0.0.1-amd64
     package:
       deploy:
         components: zarf-ecr-credential-helper
-
-    package:
-      deploy:
         set:
           registry_type: private
 
@@ -74,6 +71,7 @@ zarf package pull oci://ghcr.io/defenseunicorns/packages/init-aws:v0.0.1-amd64
           # Set IAM role ARNs
           ecr_hook_role_arn: <YOUR_WEBHOOK_ROLE_ARN>
           ecr_credential_helper_role_arn: <YOUR_CREDENTIAL_HELPER_ROLE_ARN>
+
     ```
 
 1. Zarf init
@@ -101,9 +99,6 @@ zarf package pull oci://ghcr.io/defenseunicorns/packages/init-aws:v0.0.1-amd64
     package:
       deploy:
         components: zarf-ecr-credential-helper
-
-    package:
-      deploy:
         set:
           registry_type: public
 
@@ -114,6 +109,7 @@ zarf package pull oci://ghcr.io/defenseunicorns/packages/init-aws:v0.0.1-amd64
           # Set IAM role ARNs
           ecr_hook_role_arn: <YOUR_WEBHOOK_ROLE_ARN>
           ecr_credential_helper_role_arn: <YOUR_CREDENTIAL_HELPER_ROLE_ARN>
+
     ```
 
 1. Zarf init
