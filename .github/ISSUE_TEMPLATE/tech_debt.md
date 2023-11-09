@@ -12,7 +12,7 @@ A clear and concise description of what should be changed/researched. Ex. This p
 
 ### Links to any relevant code
 
-(optional) i.e. - https://github.com/defenseunicorns/zarf-init-aws/blob/main/README.md?plain=1#L1
+(optional) i.e. - <https://github.com/defenseunicorns/zarf-init-aws/blob/main/README.md?plain=1#L1>
 
 ### Additional context
 
