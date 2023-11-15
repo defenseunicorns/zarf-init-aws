@@ -1,0 +1,9 @@
+{
+  "name": "update-zarf-config",
+  "version": "1.0.0",
+  "description": "A script to update the Zarf config file values",
+  "main": "index.mjs",
+  "dependencies": {
+    "yaml": "^2.3.3"
+  }
+}

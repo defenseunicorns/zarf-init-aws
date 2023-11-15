@@ -1,0 +1,67 @@
+kind: ZarfPackageConfig
+metadata:
+  name: distro-eks
+  description: Deploy a EKS K8s cluster
+  architecture: multi
+  version: 0.0.5
+
+variables:
+  - name: EKS_CLUSTER_NAME
+    description: The name for the EKS cluster
+    prompt: true
+
+  - name: EKS_INSTANCE_TYPE
+    description: The EC2 instance type for the worker nodes
+    default: t3.small
+
+  - name: EKS_CLUSTER_REGION
+    description: The AWS region to setup the cluster and associated networking
+    default: us-west-2
+
+  - name: EKS_CLUSTER_VERSION
+    description: The Kubernetes version to use for the cluster
+    default: "1.27"
+
+  - name: EBS_DRIVER_VERSION
+    description: The EBS driver version to use for the cluster (must be available on the K8s version)
+    default: "v1.24.0"
+
+components:
+  - name: load-eksctl
+    required: true
+    files:
+      - source: eks.yaml
+        target: eks.yaml
+      - source: https://github.com/weaveworks/eksctl/releases/download/v0.164.0/eksctl_Darwin_amd64.tar.gz
+        shasum: b94b7d782a7e808e5cf4822d6b959e3a3ca6289b7a6c9fb3259687e55813f11d
+        target: binaries/eksctl_Darwin_x86_64
+        executable: true
+        extractPath: eksctl
+      - source: https://github.com/weaveworks/eksctl/releases/download/v0.164.0/eksctl_Darwin_arm64.tar.gz
+        shasum: 12e53b4e46bca9fc93b343de95db98388a93cc98f67916795854ae5d5dfae035
+        target: binaries/eksctl_Darwin_arm64
+        executable: true
+        extractPath: eksctl
+      - source: https://github.com/weaveworks/eksctl/releases/download/v0.164.0/eksctl_Linux_amd64.tar.gz
+        shasum: 9d0d94dd738d8bb39e95a0184e39f6b08c9e96804ea4a64e52d394000313b983
+        target: binaries/eksctl_Linux_x86_64
+        executable: true
+        extractPath: eksctl
+
+  - name: deploy-eks-cluster
+    description: Create an EKS cluster!
+    actions:
+      onDeploy:
+        before:
+          - cmd: ./binaries/eksctl_$(uname -s)_$(uname -m) create cluster --dry-run -f eks.yaml
+          - cmd: sleep 15
+          - cmd: ./binaries/eksctl_$(uname -s)_$(uname -m) create cluster -f eks.yaml
+          - cmd: ./binaries/eksctl_$(uname -s)_$(uname -m) utils write-kubeconfig -c ${ZARF_VAR_EKS_CLUSTER_NAME} -r ${ZARF_VAR_EKS_CLUSTER_REGION}
+      onRemove:
+        before:
+          # NOTE: This onRemove action assumes the presence of an eksctl binary in a 'binaries' directory from where 'zarf package remove' was ran.
+          - cmd: ./binaries/eksctl_$(uname -s)_$(uname -m) delete cluster -f eks.yaml --disable-nodegroup-eviction --wait
+        after:
+          # clean up after ourselves
+          - cmd: rm -rf binaries
+          - cmd: rm -f eks.yaml

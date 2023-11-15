@@ -1,0 +1,23 @@
+name: Validate Schema Generation
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac # v4.0.0
+
+      - name: Setup Go
+        uses: defenseunicorns/zarf/.github/actions/golang@main
+
+      - name: Check that 'make gen-schema' was ran
+        run: make test-gen-schema
+
+      - name: Save logs
+        if: always()
+        uses: defenseunicorns/zarf/.github/actions/save-logs@main

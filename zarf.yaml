@@ -1,0 +1,92 @@
+kind: ZarfInitConfig
+metadata:
+  name: init-aws
+  description: "Zarf Init Package that uses ECR as an external Zarf registry"
+  url: https://github.com/defenseunicorns/zarf-init-aws
+
+constants:
+  - name: PEPR_IMAGE
+    value: "###ZARF_PKG_TMPL_PEPR_IMAGE###"
+  - name: PEPR_IMAGE_TAG
+    value: "###ZARF_PKG_TMPL_PEPR_IMAGE_TAG###"
+
+  - name: CREDENTIAL_HELPER_IMAGE
+    value: "###ZARF_PKG_TMPL_CREDENTIAL_HELPER_IMAGE###"
+  - name: CREDENTIAL_HELPER_IMAGE_TAG
+    value: "###ZARF_PKG_TMPL_CREDENTIAL_HELPER_IMAGE_TAG###"
+
+variables:
+  - name: REGISTRY_TYPE
+    description: "Specify whether you want to use a private or public ECR registry"
+    prompt: true
+
+  - name: AWS_REGION
+    description: "The AWS region the ECR registry is located in"
+    prompt: true
+
+  - name: ECR_HOOK_ROLE_ARN
+    description: "The ARN of an IAM role to give Pepr necessary permissions to list and create ECR repositories"
+    prompt: true
+
+  - name: ECR_CREDENTIAL_HELPER_ROLE_ARN
+    description: "The ARN of an IAM role to give the zarf-ecr-credential-helper necessary permissions to fetch ECR tokens"
+    prompt: true
+
+  - name: ECR_CREDENTIAL_HELPER_CRON_SCHEDULE
+    description: "The schedule on which the ECR credential helper CronJob will run. https://kubernetes.io/docs/concepts/workloads/controllers/cron-jobs/#schedule-syntax"
+    # Run once an hour at the beginning of the hour
+    default: "0 * * * *"
+
+components:
+  - name: ecr-bootstrap
+    description: "Bootstrap the deployment by creating an ECR repository for the Pepr controller image"
+    required: true
+    files:
+      - source: hack/ecr.sh
+        target: hack/ecr.sh
+        executable: true
+    actions:
+      onDeploy:
+        after:
+          - cmd: ./hack/ecr.sh
+            description: "Create ECR repository for the Pepr controller image"
+
+  - name: ecr-hook
+    description: "Pepr webhook that creates ECR repos for images during package deployments"
+    required: true
+    manifests:
+      - name: module
+        namespace: pepr-system
+        kustomizations:
+          - manifests
+    images:
+      - "###ZARF_PKG_TMPL_PEPR_IMAGE_DOMAIN###/###ZARF_PKG_TMPL_PEPR_IMAGE###:###ZARF_PKG_TMPL_PEPR_IMAGE_TAG###"
+
+  - name: zarf-agent
+    required: true
+    import:
+      url: oci://ghcr.io/defenseunicorns/packages/init:v0.31.0-skeleton
+      name: zarf-agent
+
+  - name: zarf-ecr-credential-helper
+    description: "CronJob that updates Zarf image pull secrets with new ECR tokens"
+    manifests:
+      - name: zarf-ecr-credential-helper
+        namespace: zarf
+        files:
+          - manifests/zarf-ecr-credential-helper.yaml
+    actions:
+      onCreate:
+        before:
+          - cmd: "test \"###ZARF_PKG_TMPL_CREDENTIAL_HELPER_IMAGE_TAG###\" != \"local\" || make build-local-credential-helper-image CREDENTIAL_HELPER_IMAGE_TAG=\"###ZARF_PKG_TMPL_CREDENTIAL_HELPER_IMAGE_TAG###\" ARCH=\"###ZARF_PKG_ARCH###\""
+            shell:
+              windows: pwsh
+            description: Build the local ECR credential helper image (if 'CREDENTIAL_HELPER_IMAGE_TAG' was specified as 'local')
+    images:
+      - "###ZARF_PKG_TMPL_CREDENTIAL_HELPER_IMAGE_DOMAIN######ZARF_PKG_TMPL_CREDENTIAL_HELPER_IMAGE###:###ZARF_PKG_TMPL_CREDENTIAL_HELPER_IMAGE_TAG###"
+
+  # (Optional) Adds a git server to the cluster
+  - name: git-server
+    import:
+      url: oci://ghcr.io/defenseunicorns/packages/init:v0.31.0-skeleton
+      name: git-server

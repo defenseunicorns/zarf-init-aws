@@ -1,0 +1,7 @@
+resources:
+  - pepr-module-b95dbd80-e078-5eb9-aaf3-bcb9567417d0.yaml
+
+patches:
+  - path: patches/add-service-account-annotation.patch.yaml
+  - path: patches/add-env-var.patch.yaml
+  - path: patches/replace-image-ref.patch.yaml

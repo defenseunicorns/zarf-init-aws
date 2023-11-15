@@ -1,0 +1,213 @@
+name: Test AWS Init Package
+on:
+  pull_request:
+    paths-ignore:
+      - "**.md"
+      - "**.jpg"
+      - "**.png"
+      - "**.gif"
+      - "**.svg"
+      - "adr/**"
+      - "docs/**"
+      - "CODEOWNERS"
+
+  workflow_dispatch:
+    inputs:
+      cluster_name_private:
+        type: string
+        default: "zarf-init-aws-private-test"
+        description: Name of the eks cluster for private ECR test
+      cluster_name_public:
+        type: string
+        default: "zarf-init-aws-public-test"
+        description: Name of the eks cluster for public ECR test
+      instance_type:
+        type: string
+        default: t3.medium
+        description: EC2 instance type to use for the EKS cluster nodes
+
+permissions:
+  id-token: write
+  contents: read
+
+# Abort prior jobs in the same workflow / PR
+concurrency:
+  group: init-aws-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # Build AWS init package and EKS package
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac # v4.0.0
+
+      - name: Install latest version of Zarf
+        uses: defenseunicorns/setup-zarf@main
+
+      - name: Setup NodeJS
+        uses: actions/setup-node@5e21ff4d9bc1a8cf6de233a3057d20ec6b3fb69d # v3.8.1
+        with:
+          node-version: 20
+          cache: "npm"
+          cache-dependency-path: "package-lock.json"
+
+      - name: Install Node dependencies
+        run: npm ci
+
+      - name: Setup Go
+        uses: defenseunicorns/zarf/.github/actions/golang@main
+
+      - name: Build ECR Pepr module
+        run: make build-module
+
+      - name: Build AWS init package
+        run: make aws-init-package
+  
+      - name: Build EKS package
+        run: make eks-package
+
+      # Upload the contents of the build directory for later stages to use
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@a8a3f3ad30e3422c9c7b888a15615d19a852ae32 # v3.1.3
+        with:
+          name: build-artifacts
+          path: build/
+          retention-days: 1
+
+  # Deploy and test AWS init package with private ECR registry
+  validate-private-ecr:
+    runs-on: ubuntu-latest
+    needs: build
+    env:
+      CLUSTER_NAME: ${{ inputs.cluster_name_private || 'zarf-init-aws-private-test' }}
+      PULUMI_CONFIG_PASSPHRASE: ""
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac # v4.0.0
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a # v3.0.2
+        with:
+          name: build-artifacts
+          path: build/
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@8c3f20df09ac63af7b3ae3d7c91f105f857d8497 # v4.0.0
+        with:
+          role-to-assume: ${{ secrets.AWS_NIGHTLY_ROLE }}
+          aws-region: us-east-1
+          role-duration-seconds: 14400
+
+      - name: Install latest version of Zarf
+        uses: defenseunicorns/setup-zarf@main
+
+      - name: Install Pulumi
+        run: curl -fsSL https://get.pulumi.com | sh
+
+      - name: Setup NodeJS
+        uses: actions/setup-node@5e21ff4d9bc1a8cf6de233a3057d20ec6b3fb69d # v3.8.1
+        with:
+          node-version: 20
+          cache: "npm"
+          cache-dependency-path: "**/package-lock.json"
+
+      - name: Install Node deps for every package.json in the repo
+        run: make install-node-deps
+
+      - name: Deploy EKS package
+        run: make deploy-eks-package CLUSTER_NAME="$CLUSTER_NAME" INSTANCE_TYPE=${{ inputs.instance_type }}
+
+      - name: Create IAM roles
+        run: make create-iam CLUSTER_NAME="$CLUSTER_NAME"
+
+      - name: Update Zarf config file with registry type and IAM role ARNs
+        run: make update-zarf-config REGISTRY_TYPE="private"
+
+      - name: Zarf init with private ECR registry
+        run: make deploy-init-package-private
+
+      - name: Teardown the cluster
+        if: always()
+        run: make remove-eks-package
+
+      - name: Delete private ECR repositories
+        if: always()
+        run: make delete-private-repos
+
+      - name: Delete IAM roles
+        if: always()
+        run: make delete-iam
+
+      - name: Save logs
+        if: always()
+        uses: defenseunicorns/zarf/.github/actions/save-logs@main
+
+  # Deploy and test AWS init package with public ECR registry
+  validate-public-ecr:
+    runs-on: ubuntu-latest
+    needs: build
+    env:
+      CLUSTER_NAME: ${{ inputs.cluster_name_public || 'zarf-init-aws-public-test' }}
+      PULUMI_CONFIG_PASSPHRASE: ""
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac # v4.0.0
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a # v3.0.2
+        with:
+          name: build-artifacts
+          path: build/
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@8c3f20df09ac63af7b3ae3d7c91f105f857d8497 # v4.0.0
+        with:
+          role-to-assume: ${{ secrets.AWS_NIGHTLY_ROLE }}
+          aws-region: us-east-1
+          role-duration-seconds: 14400
+
+      - name: Install latest version of Zarf
+        uses: defenseunicorns/setup-zarf@main
+
+      - name: Install Pulumi
+        run: curl -fsSL https://get.pulumi.com | sh
+
+      - name: Setup NodeJS
+        uses: actions/setup-node@5e21ff4d9bc1a8cf6de233a3057d20ec6b3fb69d # v3.8.1
+        with:
+          node-version: 20
+          cache: "npm"
+          cache-dependency-path: "**/package-lock.json"
+
+      - name: Install Node deps for every package.json in the repo
+        run: make install-node-deps
+
+      - name: Deploy EKS package
+        run: make deploy-eks-package CLUSTER_NAME="$CLUSTER_NAME" INSTANCE_TYPE=${{ inputs.instance_type }}
+
+      - name: Create IAM roles
+        run: make create-iam CLUSTER_NAME="$CLUSTER_NAME"
+
+      - name: Update Zarf config file with registry type and IAM role ARNs
+        run: make update-zarf-config REGISTRY_TYPE="public"
+
+      - name: Zarf init with public ECR registry
+        run: make deploy-init-package-public
+
+      - name: Teardown the cluster
+        if: always()
+        run: make remove-eks-package
+
+      - name: Delete public ECR repositories
+        if: always()
+        run: make delete-public-repos
+
+      - name: Delete IAM roles
+        if: always()
+        run: make delete-iam
+
+      - name: Save logs
+        if: always()
+        uses: defenseunicorns/zarf/.github/actions/save-logs@main

@@ -1,0 +1,11 @@
+node_modules
+dist
+insecure*
+coverage
+build
+Pulumi.**.y*ml
+binaries
+eks.yaml
+**.tar.zst
+zarf-config.y*ml
+zarf-sbom
