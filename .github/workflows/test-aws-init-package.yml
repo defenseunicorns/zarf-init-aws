@@ -41,7 +41,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac # v4.0.0
+        uses: actions/checkout@1e31de5234b9f8995739874a8ce0492dc87873e2 # v4.0.0
 
       - name: Install latest version of Zarf
         uses: defenseunicorns/setup-zarf@main
@@ -85,7 +85,7 @@ jobs:
       PULUMI_CONFIG_PASSPHRASE: ""
     steps:
       - name: Checkout
-        uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac # v4.0.0
+        uses: actions/checkout@1e31de5234b9f8995739874a8ce0492dc87873e2 # v4.0.0
 
       - name: Download build artifacts
         uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a # v3.0.2
@@ -153,7 +153,7 @@ jobs:
       PULUMI_CONFIG_PASSPHRASE: ""
     steps:
       - name: Checkout
-        uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac # v4.0.0
+        uses: actions/checkout@1e31de5234b9f8995739874a8ce0492dc87873e2 # v4.0.0
 
       - name: Download build artifacts
         uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a # v3.0.2
