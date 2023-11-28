@@ -136,9 +136,9 @@ delete-private-repos: ## Delete private ECR repos created by deploying the AWS i
 deploy-init-package-public: ## Run zarf init to deploy the AWS init package configured with public ECR registry
 	@cd build || exit \
 	&& ZARF_CONFIG="../zarf-config.yaml" zarf init \
-		--registry-url="$$(aws ecr-public describe-registries --query 'registries[0].registryUri' --output text --region us-west-2)" \
+		--registry-url="$$(aws ecr-public describe-registries --query 'registries[0].registryUri' --output text --region us-east-1)" \
         --registry-push-username="AWS" \
-        --registry-push-password="$$(aws ecr-public get-login-password --region us-west-2)" \
+        --registry-push-password="$$(aws ecr-public get-login-password --region us-east-1)" \
         --components="zarf-ecr-credential-helper" \
         --confirm
 
