@@ -29,7 +29,7 @@ package:
 
   deploy:
     set:
-      aws_region: us-west-2
+      aws_region: us-east-1
       registry_type: ""
       ecr_hook_role_arn: ""
       ecr_credential_helper_role_arn: ""

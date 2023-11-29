@@ -121,16 +121,16 @@ update-zarf-config: ## Generate a new Zarf config file with registry type and IA
 deploy-init-package-private: ## Run zarf init to deploy the AWS init package configured with private ECR registry
 	@cd build || exit \
 	&& ZARF_CONFIG="../zarf-config.yaml" zarf init \
-		--registry-url="$$(aws sts get-caller-identity --query 'Account' --output text).dkr.ecr.us-west-2.amazonaws.com" \
+		--registry-url="$$(aws sts get-caller-identity --query 'Account' --output text).dkr.ecr.us-east-1.amazonaws.com" \
         --registry-push-username="AWS" \
-        --registry-push-password="$$(aws ecr get-login-password --region us-west-2)" \
+        --registry-push-password="$$(aws ecr get-login-password --region us-east-1)" \
         --components="zarf-ecr-credential-helper" \
         --confirm
 
 delete-private-repos: ## Delete private ECR repos created by deploying the AWS init package
 	@repos="defenseunicorns/pepr/controller defenseunicorns/zarf/agent defenseunicorns/zarf-init-aws/ecr-credential-helper"; \
 	for repo in $${repos}; do \
-		aws ecr delete-repository --repository-name "$$repo" --force || true; \
+		aws ecr delete-repository --repository-name "$$repo" --force --region us-east-1 || true; \
 	done
 
 deploy-init-package-public: ## Run zarf init to deploy the AWS init package configured with public ECR registry
@@ -145,7 +145,7 @@ deploy-init-package-public: ## Run zarf init to deploy the AWS init package conf
 delete-public-repos: ## Delete public ECR repos created by deploying the AWS init package
 	@repos="defenseunicorns/pepr/controller defenseunicorns/zarf/agent defenseunicorns/zarf-init-aws/ecr-credential-helper"; \
 	for repo in $${repos}; do \
-		aws ecr-public delete-repository --repository-name "$$repo" --force || true; \
+		aws ecr-public delete-repository --repository-name "$$repo" --force --region us-east-1 || true; \
 	done
 
 # INTERNAL: used to test for new CVEs that may have been introduced
