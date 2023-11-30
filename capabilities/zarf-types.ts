@@ -9,6 +9,7 @@
 
 export interface ZarfTypes {
     DeployedPackage: DeployedPackage;
+    ZarfPackage:     ZarfPackage;
     ZarfState:       ZarfState;
 }
 
@@ -447,7 +448,7 @@ export interface ZarfChart {
      */
     gitPath?: string;
     /**
-     * The path to the chart folder
+     * The path to the local chart's folder or .tgz archive
      */
     localPath?: string;
     /**
@@ -1160,6 +1161,7 @@ function r(name: string) {
 const typeMap: any = {
     "ZarfTypes": o([
         { json: "DeployedPackage", js: "DeployedPackage", typ: r("DeployedPackage") },
+        { json: "ZarfPackage", js: "ZarfPackage", typ: r("ZarfPackage") },
         { json: "ZarfState", js: "ZarfState", typ: r("ZarfState") },
     ], false),
     "DeployedPackage": o([
