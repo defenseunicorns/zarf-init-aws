@@ -1,10 +1,10 @@
-import { K8s, kind, Log, a } from "pepr";
+import { K8s, kind, Log } from "pepr";
 import { createRepos } from "./ecr";
 import {
   ZarfComponent,
   DeployedComponent,
   DeployedPackage,
-} from "../zarf-types";
+} from "../../zarf-types";
 
 /**
  * Represents a component check result, indicating whether a component is ready for a webhook to execute.
@@ -182,54 +182,30 @@ export async function updateWebhookStatus(
 ): Promise<void> {
   const ns = "zarf";
 
-  let secret: a.Secret;
-  let secretString: string;
-  let deployedPackage: DeployedPackage;
-  let manuallyDecoded = false;
-
-  // Fetch the package secret
   try {
-    secret = await K8s(kind.Secret).InNamespace(ns).Get(secretName);
-  } catch (err) {
-    Log.error(
-      `Error: Failed to get package secret '${secretName}' in namespace '${ns}': ${JSON.stringify(
-        err,
-      )}`,
-    );
-  }
+    // Fetch the package secret
+    const secret = await K8s(kind.Secret).InNamespace(ns).Get(secretName);
 
-  try {
-    secretString = atob(secret.data.data);
-    manuallyDecoded = true;
-  } catch (err) {
-    secretString = secret.data.data;
-  }
+    if (!secret.data) {
+      Log.error(
+        `Error: Package secret data is undefined for '${secretName}' in namespace '${ns}'.`,
+      );
+      return;
+    }
 
-  try {
-    deployedPackage = JSON.parse(secretString);
-  } catch (err) {
-    Log.error(`Failed to parse the secret data: ${err.message}`);
-  }
+    const secretString = atob(secret.data.data);
+    const deployedPackage: DeployedPackage = JSON.parse(secretString);
 
-  const componentWebhook =
-    deployedPackage.componentWebhooks?.[componentName][webhookName];
+    // Update the webhook status if the observedGeneration matches
+    const componentWebhook =
+      deployedPackage.componentWebhooks?.[componentName]?.[webhookName];
+    if (componentWebhook?.observedGeneration === deployedPackage.generation) {
+      componentWebhook.status = status;
+    }
 
-  // Update the webhook status if the observedGeneration matches
-  if (componentWebhook?.observedGeneration === deployedPackage.generation) {
-    componentWebhook.status = status;
-    deployedPackage.componentWebhooks[componentName][webhookName] =
-      componentWebhook;
-  }
-
-  if (manuallyDecoded === true) {
     secret.data.data = btoa(JSON.stringify(deployedPackage));
-  } else {
-    secret.data.data = JSON.stringify(deployedPackage);
-  }
 
-  // Use Server-Side force apply to forcefully take ownership of the package secret data.data field
-  // Doing a Server-Side apply without the force option will result in a FieldManagerConflict error due to Zarf owning the object.
-  try {
+    // Use Server-Side force apply to forcefully take ownership of the package secret data.data field
     await K8s(kind.Secret).Apply(
       {
         metadata: {
@@ -243,8 +219,8 @@ export async function updateWebhookStatus(
       { force: true },
     );
   } catch (err) {
-    throw new Error(
-      `Error: Failed to update package secret '${secretName}' in namespace '${ns}': ${JSON.stringify(
+    Log.error(
+      `Error: Failed to update webhook status in package secret '${secretName}' in namespace '${ns}': ${JSON.stringify(
         err,
       )}`,
     );

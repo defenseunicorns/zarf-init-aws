@@ -1,6 +1,6 @@
 import { Capability, Log, a } from "pepr";
 import { isECRregistry } from "./lib/ecr";
-import { DeployedPackage } from "./zarf-types";
+import { DeployedPackage } from "../zarf-types";
 import {
   createReposAndUpdateStatus,
   componentReadyForWebhook,
@@ -26,18 +26,23 @@ When(a.Secret)
 
     if (!result.isECR) {
       throw new Error(
-        `A valid ECR URL was not found in the Zarf state secret: ${result.registryURL}\n
+        `Error: A valid ECR URL was not found in the Zarf state secret: ${result.registryURL}\n
         Please provide a valid ECR registry URL.\n
         Example: '123456789012.dkr.ecr.us-east-1.amazonaws.com'`,
       );
     }
 
     const webhookName = "ecr-webhook";
-
     const secret = request.Raw;
-    let deployedPackage: DeployedPackage;
-    let secretString: string;
+
     let manuallyDecoded = false;
+    let secretString: string;
+
+    if (!secret.data) {
+      throw new Error(
+        `Error: the '.data' field for package secret ${secret.metadata?.name} is undefined.`,
+      );
+    }
 
     try {
       secretString = atob(secret.data.data);
@@ -46,11 +51,7 @@ When(a.Secret)
       secretString = secret.data.data;
     }
 
-    try {
-      deployedPackage = JSON.parse(secretString);
-    } catch (err) {
-      throw new Error(`Failed to parse the secret data: ${err.message}`);
-    }
+    const deployedPackage: DeployedPackage = JSON.parse(secretString);
 
     const componentRes = componentReadyForWebhook(deployedPackage, webhookName);
     if (!componentRes) {
@@ -77,7 +78,7 @@ When(a.Secret)
     createReposAndUpdateStatus(
       componentRes.deployedComponent,
       result.registryURL,
-      secret.metadata.name,
+      secret.metadata?.name as string,
       webhookName,
       componentRes.component,
     );

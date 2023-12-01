@@ -1,8 +1,8 @@
 import { K8s, kind, Log } from "pepr";
 import { getRepositoryNames } from "./utils";
-import { ZarfState, DeployedComponent, ZarfComponent } from "../zarf-types";
-import { privateECRURLPattern, ECRPrivate } from "../ecr-private";
-import { publicECRURLPattern, ECRPublic } from "../ecr-public";
+import { ZarfState, DeployedComponent, ZarfComponent } from "../../zarf-types";
+import { privateECRURLPattern, ECRPrivate } from "../../ecr-private";
+import { publicECRURLPattern, ECRPublic } from "../../ecr-public";
 
 /**
  * Represents the result of checking whether the Zarf registry is an ECR registry.
@@ -18,36 +18,41 @@ interface ECRCheckResult {
  * @throws {Error} If an error occurs while fetching or parsing the Zarf state secret.
  */
 export async function isECRregistry(): Promise<ECRCheckResult> {
-  let zarfState: ZarfState;
-
-  // Fetch the Zarf state secret
   try {
+    // Fetch the Zarf state secret
     const secret = await K8s(kind.Secret).InNamespace("zarf").Get("zarf-state");
+
+    if (!secret.data || !secret.data.state) {
+      throw new Error(
+        "Error: 'zarf-state' secret or its 'state' data is undefined.",
+      );
+    }
+
     const secretString = atob(secret.data.state);
-    zarfState = JSON.parse(secretString);
+    const zarfState: ZarfState = JSON.parse(secretString);
+
+    if (zarfState.registryInfo.internalRegistry === true) {
+      Log.warn(
+        "Zarf is configured to use an internal registry. Skipping creating ECR repos.",
+      );
+      return { isECR: false, registryURL: zarfState.registryInfo.address };
+    }
+
+    const registryURL = zarfState.registryInfo.address;
+
+    if (
+      publicECRURLPattern.test(registryURL) ||
+      privateECRURLPattern.test(registryURL)
+    ) {
+      return { isECR: true, registryURL };
+    }
   } catch (err) {
     throw new Error(
-      `Error: Failed to get secret 'zarf-state' in namespace 'zarf': ${err}`,
+      `Error: unable to determine if Zarf is configured to use an ECR registry: ${err}`,
     );
   }
 
-  const registryURL = zarfState.registryInfo.address;
-
-  if (zarfState.registryInfo.internalRegistry === true) {
-    Log.warn(
-      "Zarf is configured to use an internal registry. Skipping creating ECR repos.",
-    );
-    return { isECR: false, registryURL };
-  }
-
-  if (
-    publicECRURLPattern.test(registryURL) ||
-    privateECRURLPattern.test(registryURL)
-  ) {
-    return { isECR: true, registryURL };
-  }
-
-  return { isECR: false, registryURL };
+  return { isECR: false, registryURL: "" };
 }
 
 /**
@@ -67,9 +72,18 @@ export async function createRepos(
     `Gathering a list of ECR repository names to create for component '${deployedComponent.name}'`,
   );
 
-  const repoNames = getRepositoryNames(zarfComponent.images);
+  const images = zarfComponent.images;
 
-  if (!repoNames) {
+  if (!images) {
+    Log.info(
+      `No repositories will be created for component '${deployedComponent.name}`,
+    );
+    return;
+  }
+
+  const repoNames = getRepositoryNames(images);
+
+  if (repoNames.length === 0) {
     Log.info(
       `No repositories will be created for component '${deployedComponent.name}`,
     );
@@ -77,6 +91,11 @@ export async function createRepos(
   }
 
   const region = process.env.AWS_REGION;
+
+  if (!region) {
+    Log.error("AWS_REGION environment variable is not defined.");
+    return;
+  }
 
   // Create repositories for private ECR registry
   if (privateECRURLPattern.test(registryURL)) {
