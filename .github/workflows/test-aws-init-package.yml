@@ -47,7 +47,7 @@ jobs:
         uses: defenseunicorns/setup-zarf@main
 
       - name: Setup NodeJS
-        uses: actions/setup-node@1a4442cacd436585916779262731d5b162bc6ec7 # v3.8.2
+        uses: actions/setup-node@8f152de45cc393bb48ce5d89d36b731f54556e65 # v4.0.0
         with:
           node-version: 20
           cache: "npm"
@@ -107,7 +107,7 @@ jobs:
         run: curl -fsSL https://get.pulumi.com | sh
 
       - name: Setup NodeJS
-        uses: actions/setup-node@1a4442cacd436585916779262731d5b162bc6ec7 # v3.8.2
+        uses: actions/setup-node@8f152de45cc393bb48ce5d89d36b731f54556e65 # v4.0.0
         with:
           node-version: 20
           cache: "npm"
@@ -175,7 +175,7 @@ jobs:
         run: curl -fsSL https://get.pulumi.com | sh
 
       - name: Setup NodeJS
-        uses: actions/setup-node@1a4442cacd436585916779262731d5b162bc6ec7 # v3.8.2
+        uses: actions/setup-node@8f152de45cc393bb48ce5d89d36b731f54556e65 # v4.0.0
         with:
           node-version: 20
           cache: "npm"
