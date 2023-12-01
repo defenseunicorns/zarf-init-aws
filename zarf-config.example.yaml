@@ -12,7 +12,7 @@ package:
       # The image reference to use for the Zarf agent
       agent_image_domain: ghcr.io/
       agent_image: defenseunicorns/zarf/agent
-      agent_image_tag: v0.31.2
+      agent_image_tag: v0.31.3
 
       # The image reference to use for the ECR credential helper, defaults to a locally built image
       credential_helper_image_domain: ghcr.io/
