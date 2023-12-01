@@ -124,7 +124,6 @@ deploy-init-package-private: ## Run zarf init to deploy the AWS init package con
 		--registry-url="$$(aws sts get-caller-identity --query 'Account' --output text).dkr.ecr.us-east-1.amazonaws.com" \
         --registry-push-username="AWS" \
         --registry-push-password="$$(aws ecr get-login-password --region us-east-1)" \
-        --components="zarf-ecr-credential-helper" \
         --confirm
 
 delete-private-repos: ## Delete private ECR repos created by deploying the AWS init package
@@ -139,7 +138,6 @@ deploy-init-package-public: ## Run zarf init to deploy the AWS init package conf
 		--registry-url="$$(aws ecr-public describe-registries --query 'registries[0].registryUri' --output text --region us-east-1)" \
         --registry-push-username="AWS" \
         --registry-push-password="$$(aws ecr-public get-login-password --region us-east-1)" \
-        --components="zarf-ecr-credential-helper" \
         --confirm
 
 delete-public-repos: ## Delete public ECR repos created by deploying the AWS init package
