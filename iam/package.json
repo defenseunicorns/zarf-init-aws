@@ -2,7 +2,7 @@
     "name": "iam",
     "main": "index.ts",
     "devDependencies": {
-        "@types/node": "^16"
+        "@types/node": "^20.0.0"
     },
     "dependencies": {
         "@pulumi/aws": "^6.6.1",
