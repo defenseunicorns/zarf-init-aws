@@ -88,5 +88,5 @@ components:
   # (Optional) Adds a git server to the cluster
   - name: git-server
     import:
-      url: oci://ghcr.io/defenseunicorns/packages/init:v0.31.2-skeleton
+      url: oci://ghcr.io/defenseunicorns/packages/init:v0.31.3-skeleton
       name: git-server
