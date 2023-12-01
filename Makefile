@@ -130,7 +130,7 @@ deploy-init-package-private: ## Run zarf init to deploy the AWS init package con
 delete-private-repos: ## Delete private ECR repos created by deploying the AWS init package
 	@repos="defenseunicorns/pepr/controller defenseunicorns/zarf/agent defenseunicorns/zarf-init-aws/ecr-credential-helper"; \
 	for repo in $${repos}; do \
-		aws ecr delete-repository --repository-name "$$repo" --force || true; \
+		aws ecr delete-repository --repository-name "$$repo" --force --region us-east-1 || true; \
 	done
 
 deploy-init-package-public: ## Run zarf init to deploy the AWS init package configured with public ECR registry
@@ -145,7 +145,7 @@ deploy-init-package-public: ## Run zarf init to deploy the AWS init package conf
 delete-public-repos: ## Delete public ECR repos created by deploying the AWS init package
 	@repos="defenseunicorns/pepr/controller defenseunicorns/zarf/agent defenseunicorns/zarf-init-aws/ecr-credential-helper"; \
 	for repo in $${repos}; do \
-		aws ecr-public delete-repository --repository-name "$$repo" --force || true; \
+		aws ecr-public delete-repository --repository-name "$$repo" --force --region us-east-1 || true; \
 	done
 
 # INTERNAL: used to test for new CVEs that may have been introduced

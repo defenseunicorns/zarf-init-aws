@@ -10,10 +10,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@1e31de5234b9f8995739874a8ce0492dc87873e2 # v4.0.0
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
 
-      - name: Setup Go
-        uses: defenseunicorns/zarf/.github/actions/golang@main
+      - name: Install latest version of Zarf
+        uses: defenseunicorns/setup-zarf@main
 
       - name: Check that 'make gen-schema' was ran
         run: make test-gen-schema
