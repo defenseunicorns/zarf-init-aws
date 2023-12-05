@@ -56,9 +56,6 @@ jobs:
       - name: Install Node dependencies
         run: npm ci
 
-      - name: Setup Go
-        uses: defenseunicorns/zarf/.github/actions/golang@main
-
       - name: Build ECR Pepr module
         run: make build-module
 

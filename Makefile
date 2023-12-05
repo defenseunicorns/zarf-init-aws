@@ -4,7 +4,6 @@
 # Provide a default value for the operating system architecture used in tests, e.g. " APPLIANCE_MODE=true|false make test-e2e ARCH=arm64"
 ARCH ?= amd64
 ZARF_VERSION ?= $$(zarf version)
-CREDENTIAL_HELPER_BIN := ./build/zarf-ecr-credential-helper
 CLUSTER_NAME ?= ""
 INSTANCE_TYPE ?= t3.small
 EKS_PACKAGE := ./build/zarf-package-distro-eks-multi-0.0.5.tar.zst
@@ -54,14 +53,6 @@ gen-schema: ## Generate TypeScript interfaces from Zarf structs
 test-gen-schema:
 	$(MAKE) gen-schema
 	hack/gen-schema/check-gen-schema.sh
-
-# Note: the path to the main.go file is not used due to https://github.com/golang/go/issues/51831#issuecomment-1074188363
-build-credential-helper-linux-amd: ## Build the ECR credential helper binary for Linux on AMD64
-	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o ./build/zarf-ecr-credential-helper
-
-build-local-credential-helper-image: ## Build the ECR credential helper image to be used in a locally built init package
-	@test -s $(CREDENTIAL_HELPER_BIN) || $(MAKE) build-credential-helper-linux-amd
-	docker buildx build --load --platform linux/$(ARCH) --tag ghcr.io/defenseunicorns/zarf-init-aws/ecr-credential-helper:local .
 
 aws-init-package: ## Build the AWS Zarf init package
 	ZARF_CONFIG="zarf-config.example.yaml" zarf package create -o build -a $(ARCH) --confirm .
@@ -116,7 +107,7 @@ delete-iam: ## Delete AWS IAM policies and roles used in CI
 
 update-zarf-config: ## Generate a new Zarf config file with registry type and IAM role ARN values to use for 'zarf init'
 	@cd iam || exit \
-	&& node ../hack/update-zarf-config/index.mjs "$(REGISTRY_TYPE)" "$$(PULUMI_CONFIG_PASSPHRASE="" pulumi stack output webhookRoleArn)" "$$(PULUMI_CONFIG_PASSPHRASE="" pulumi stack output credentialHelperRoleArn)"
+	&& node ../hack/update-zarf-config/index.mjs "$(REGISTRY_TYPE)" "$$(PULUMI_CONFIG_PASSPHRASE="" pulumi stack output roleArn)"
 
 deploy-init-package-private: ## Run zarf init to deploy the AWS init package configured with private ECR registry
 	@cd build || exit \
@@ -127,7 +118,7 @@ deploy-init-package-private: ## Run zarf init to deploy the AWS init package con
         --confirm
 
 delete-private-repos: ## Delete private ECR repos created by deploying the AWS init package
-	@repos="defenseunicorns/pepr/controller defenseunicorns/zarf/agent defenseunicorns/zarf-init-aws/ecr-credential-helper"; \
+	@repos="defenseunicorns/pepr/controller defenseunicorns/zarf/agent"; \
 	for repo in $${repos}; do \
 		aws ecr delete-repository --repository-name "$$repo" --force --region us-east-1 || true; \
 	done
@@ -141,7 +132,7 @@ deploy-init-package-public: ## Run zarf init to deploy the AWS init package conf
         --confirm
 
 delete-public-repos: ## Delete public ECR repos created by deploying the AWS init package
-	@repos="defenseunicorns/pepr/controller defenseunicorns/zarf/agent defenseunicorns/zarf-init-aws/ecr-credential-helper"; \
+	@repos="defenseunicorns/pepr/controller defenseunicorns/zarf/agent"; \
 	for repo in $${repos}; do \
 		aws ecr-public delete-repository --repository-name "$$repo" --force --region us-east-1 || true; \
 	done

@@ -14,11 +14,6 @@ package:
       agent_image: defenseunicorns/zarf/agent
       agent_image_tag: v0.31.3
 
-      # The image reference to use for the ECR credential helper, defaults to a locally built image
-      credential_helper_image_domain: ghcr.io/
-      credential_helper_image: defenseunicorns/zarf-init-aws/ecr-credential-helper
-      credential_helper_image_tag: local
-
       # The image reference to use for the optional git-server Zarf deploys
       gitea_image: gitea/gitea
       gitea_server_version: 1.19.3
@@ -31,6 +26,5 @@ package:
     set:
       aws_region: us-east-1
       registry_type: ""
-      ecr_hook_role_arn: ""
-      ecr_credential_helper_role_arn: ""
+      ecr_role_arn: ""
       ecr_credential_helper_cron_schedule: "*/1 * * * *"

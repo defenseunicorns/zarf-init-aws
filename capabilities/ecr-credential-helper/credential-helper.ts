@@ -13,7 +13,7 @@ const { OnSchedule } = ECRCredentialHelper;
 
 OnSchedule({
   name: "refresh-ecr-token",
-  every: 30,
+  every: 10,
   unit: "seconds",
   run: async () => {
     Log.info("AM I RUNNING?");

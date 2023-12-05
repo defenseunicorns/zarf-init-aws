@@ -35,9 +35,6 @@
   ],
   "platformAutomerge": true,
   "platformCommit": true,
-  "postUpdateOptions": [
-    "gomodTidy"
-  ],
   "regexManagers": [
     {
       "fileMatch": [

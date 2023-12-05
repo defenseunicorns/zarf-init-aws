@@ -28,20 +28,11 @@ This repository contains the Zarf init package for AWS that uses [ECR](https://a
 
 - AWS CLI configured with the necessary permissions to describe and create ECR repositories, and fetch ECR tokens
 
-- Create IAM role for the Pepr webhook to be able to list and create ECR repositories
-  - See an [example role for reference](iam/json/ecr-webhook-role.json). Be sure to replace the `{{AWS_ACCOUNT_ID}}` and `{{EKS_CLUSTER_ID}}` placeholders, as well as the AWS region with your values.
+- Create IAM role for the Pepr controller to be able to list and create ECR repositories, as well as fetch ECR tokens
+  - See an [example role for reference](iam/json/ecr-role.json). Be sure to replace the `{{AWS_ACCOUNT_ID}}` and `{{EKS_CLUSTER_ID}}` placeholders, as well as the AWS region with your values.
 
-  - You will need to create an IAM policy with the appropriate permissions and attach it to the role. See an [example policy for reference](iam/json/ecr-webhook-policy.json).
+  - You will need to create an IAM policy with the appropriate permissions and attach it to the role. See an [example policy for reference](iam/json/ecr-policy.json).
 
-  ***Note***: If you only need to work with a private ECR registry, the `ecr-public:` prefixed actions can be removed from the policy. Likewise, if you only need to work with a public ECR registry, the `ecr:` prefixed actions can be removed from the policy.
-
-- (Optional) Create IAM role for the `zarf-ecr-credential-helper` to be able to fetch new ECR auth tokens
-  - The credential helper is an optional component and is NOT required to use ECR as an external Zarf registry. It can be used if you are looking for an automated solution for keeping your image pull secrets updated with valid ECR auth tokens. Frequent rotation of ECR tokens in image pull secrets is required because they expire after 12 hours. <https://docs.aws.amazon.com/AmazonECR/latest/APIReference/API_GetAuthorizationToken.html>
-
-  - See an [example role for reference](iam/json/ecr-credential-helper-role.json). Be sure to replace the `{{AWS_ACCOUNT_ID}}` and `{{EKS_CLUSTER_ID}}` placeholders, as well as the AWS region with your values.
-  
-  - You will need to create an IAM policy with the appropriate permissions and attach it to the role. See an [example policy for reference](iam/json/ecr-credential-helper-policy.json).
-  
   ***Note***: If you only need to work with a private ECR registry, the `ecr-public:` prefixed actions can be removed from the policy. Likewise, if you only need to work with a public ECR registry, the `ecr:` prefixed actions can be removed from the policy.
 
 ### Get the Zarf init package
@@ -61,7 +52,6 @@ zarf package pull oci://ghcr.io/defenseunicorns/packages/init-aws:$(zarf version
 
     package:
       deploy:
-        components: zarf-ecr-credential-helper
         set:
           registry_type: private
 
@@ -69,8 +59,7 @@ zarf package pull oci://ghcr.io/defenseunicorns/packages/init-aws:$(zarf version
           aws_region: us-east-1
 
           # Set IAM role ARNs
-          ecr_hook_role_arn: <YOUR_WEBHOOK_ROLE_ARN>
-          ecr_credential_helper_role_arn: <YOUR_CREDENTIAL_HELPER_ROLE_ARN>
+          ecr_role_arn: <YOUR_ROLE_ARN>
 
     ```
 
@@ -98,7 +87,6 @@ zarf package pull oci://ghcr.io/defenseunicorns/packages/init-aws:$(zarf version
 
     package:
       deploy:
-        components: zarf-ecr-credential-helper
         set:
           registry_type: public
 
@@ -107,8 +95,7 @@ zarf package pull oci://ghcr.io/defenseunicorns/packages/init-aws:$(zarf version
           aws_region: us-east-1
 
           # Set IAM role ARNs
-          ecr_hook_role_arn: <YOUR_WEBHOOK_ROLE_ARN>
-          ecr_credential_helper_role_arn: <YOUR_CREDENTIAL_HELPER_ROLE_ARN>
+          ecr_role_arn: <YOUR_ROLE_ARN>
 
     ```
 
