@@ -28,7 +28,7 @@ jobs:
         uses: defenseunicorns/zarf/.github/actions/install-tools@main
 
       - name: Build AWS init package for release
-        run: make release-aws-init-package CREDENTIAL_HELPER_IMAGE_TAG=$GITHUB_REF_NAME
+        run: make release-aws-init-package
 
       - name: Publish AWS Init Package as OCI and Skeleton
         run: make publish-aws-init-package ARCH=amd64 REPOSITORY_URL=ghcr.io/defenseunicorns/packages

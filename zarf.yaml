@@ -10,11 +10,6 @@ constants:
   - name: PEPR_IMAGE_TAG
     value: "###ZARF_PKG_TMPL_PEPR_IMAGE_TAG###"
 
-  - name: CREDENTIAL_HELPER_IMAGE
-    value: "###ZARF_PKG_TMPL_CREDENTIAL_HELPER_IMAGE###"
-  - name: CREDENTIAL_HELPER_IMAGE_TAG
-    value: "###ZARF_PKG_TMPL_CREDENTIAL_HELPER_IMAGE_TAG###"
-
 variables:
   - name: REGISTRY_TYPE
     description: "Specify whether you want to use a private or public ECR registry"
