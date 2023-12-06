@@ -8,7 +8,4 @@ import { ECRCredentialHelper } from "./capabilities/ecr-credential-helper/creden
  * This is the main entrypoint for this Pepr module. It is run when the module is started.
  * This is where you register your Pepr configurations and capabilities.
  */
-new PeprModule(cfg, [
-  ECRhook,
-  ECRCredentialHelper,
-]);
+new PeprModule(cfg, [ECRhook, ECRCredentialHelper]);
