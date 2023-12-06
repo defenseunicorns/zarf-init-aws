@@ -12,7 +12,7 @@ import {
 export const ECRhook = new Capability({
   name: "ecr",
   description: "Create ECR repositories for a Zarf managed ECR registry",
-  namespaces: ["pepr-system"],
+  namespaces: ["pepr-system", "zarf"],
 });
 
 const { When } = ECRhook;
