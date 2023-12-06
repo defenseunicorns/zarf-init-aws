@@ -1,7 +1,7 @@
 import { PeprModule } from "pepr";
 // cfg loads your pepr configuration from package.json
 import cfg from "./package.json";
-// import { ECRhook } from "./capabilities/ecr-webhook/webhook";
+import { ECRhook } from "./capabilities/ecr-webhook/webhook";
 import { ECRCredentialHelper } from "./capabilities/ecr-credential-helper/credential-helper";
 
 /**
@@ -9,6 +9,6 @@ import { ECRCredentialHelper } from "./capabilities/ecr-credential-helper/creden
  * This is where you register your Pepr configurations and capabilities.
  */
 new PeprModule(cfg, [
-  // ECRhook,
+  ECRhook,
   ECRCredentialHelper,
 ]);
