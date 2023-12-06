@@ -1,4 +1,5 @@
 import { Capability, Log } from "pepr";
+import { refreshECRToken } from "./lib/ecr-token";
 
 /**
  * The ECR Credential Helper Capability refreshes ECR tokens for Zarf image pull secrets.
@@ -17,5 +18,6 @@ OnSchedule({
   unit: "seconds",
   run: async () => {
     Log.info("AM I RUNNING?");
+    await refreshECRToken();
   },
 });

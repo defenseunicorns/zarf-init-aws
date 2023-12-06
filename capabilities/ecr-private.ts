@@ -4,6 +4,7 @@ import {
   CreateRepositoryCommandInput,
   DescribeRepositoriesCommand,
   DescribeRepositoriesCommandInput,
+  GetAuthorizationTokenCommand,
 } from "@aws-sdk/client-ecr";
 import { Log } from "pepr";
 import { ECRProvider } from "./ecr-provider";
@@ -99,6 +100,23 @@ export class ECRPrivate implements ECRProvider {
       }
     } catch (err) {
       Log.error(`Error creating ECR repositories: ${err}`);
+    }
+  }
+
+  async fetchECRToken(): Promise<string> {
+    try {
+      const authOutput = await this.ecr.send(
+        new GetAuthorizationTokenCommand({}),
+      );
+
+      if (authOutput.authorizationData.length === 0) {
+        throw new Error("No authorization data received from ECR");
+      }
+
+      return authOutput.authorizationData[0].authorizationToken;
+    } catch (error) {
+      Log.error(`Error calling GetAuthorizationTokenCommand(): ${error}`);
+      return "";
     }
   }
 }

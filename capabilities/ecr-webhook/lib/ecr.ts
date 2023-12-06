@@ -1,8 +1,9 @@
-import { K8s, kind, Log } from "pepr";
+import { Log } from "pepr";
 import { getRepositoryNames } from "./utils";
 import { ZarfState, DeployedComponent, ZarfComponent } from "../../zarf-types";
 import { privateECRURLPattern, ECRPrivate } from "../../ecr-private";
 import { publicECRURLPattern, ECRPublic } from "../../ecr-public";
+import { getSecret } from "../../lib/k8s";
 
 /**
  * Represents the result of checking whether the Zarf registry is an ECR registry.
@@ -20,7 +21,7 @@ interface ECRCheckResult {
 export async function isECRregistry(): Promise<ECRCheckResult> {
   try {
     // Fetch the Zarf state secret
-    const secret = await K8s(kind.Secret).InNamespace("zarf").Get("zarf-state");
+    const secret = await getSecret("zarf", "zarf-state");
 
     if (!secret.data || !secret.data.state) {
       throw new Error(
