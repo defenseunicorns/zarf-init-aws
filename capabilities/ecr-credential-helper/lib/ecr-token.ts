@@ -99,7 +99,7 @@ async function updateZarfManagedImageSecrets(
       }
     }
   } catch (err) {
-    Log.error(`"unable to update secret Zarf image pull secret: ${err}`);
+    Log.error(`"unable to update Zarf image pull secret: ${err}`);
     return;
   }
 }
