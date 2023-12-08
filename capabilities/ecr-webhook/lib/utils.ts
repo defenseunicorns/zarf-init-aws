@@ -36,7 +36,10 @@ export function componentReadyForWebhook(
     const component = componentsByName.get(deployedComponent.name);
 
     if (!component) {
-      continue;
+      throw new Error(
+        `Deployed component '${deployedComponent.name}' does not exist in the zarf.yaml components.\n
+        Please ensure your zarf.yaml components match what is deployed in your cluster for package '${deployedPackage.name}'`,
+      );
     }
     if (!component.images) {
       continue;
