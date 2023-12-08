@@ -56,9 +56,9 @@ export async function updateZarfManagedImageSecrets(
       ) {
         // Update the secret with the new ECR auth token
         const dockerConfigJSON = {
-          Auths: {
+          auths: {
             [ecrURL]: {
-              Auth: authToken,
+              auth: authToken,
             },
           },
         };
