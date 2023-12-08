@@ -44,7 +44,7 @@ jobs:
         env:
           CODEQL_EXTRACTOR_GO_BUILD_TRACING: on
         with:
-          languages: ${{ matrix.language }}
+          languages: typescript
           config-file: ./.github/codeql.yaml
 
       - name: Perform CodeQL Analysis
