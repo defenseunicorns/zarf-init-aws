@@ -5,7 +5,6 @@ import {
   DeployedComponent,
   DeployedPackage,
 } from "../../zarf-types";
-import { getSecret } from "../../lib/k8s";
 
 /**
  * Represents a component check result, indicating whether a component is ready for a webhook to execute.
@@ -188,7 +187,7 @@ export async function updateWebhookStatus(
 
   try {
     // Fetch the package secret
-    const secret = await getSecret(ns, secretName);
+    const secret = await K8s(kind.Secret).InNamespace(ns).Get(secretName);
 
     if (secret.data === undefined) {
       throw new Error(

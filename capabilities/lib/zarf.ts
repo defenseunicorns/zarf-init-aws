@@ -1,4 +1,3 @@
-import { getSecret, listNamespaces } from "./k8s";
 import { ZarfState } from "../zarf-types";
 import { K8s, kind, Log } from "pepr";
 
@@ -10,7 +9,9 @@ const zarfManagedByLabel = "app.kubernetes.io/managed-by";
 
 export async function getZarfRegistryURL(): Promise<string> {
   try {
-    const secret = await getSecret(zarfNamespace, zarfStateSecret);
+    const secret = await K8s(kind.Secret)
+      .InNamespace(zarfNamespace)
+      .Get(zarfStateSecret);
     const secretString = atob(secret.data!.state);
     const zarfState: ZarfState = JSON.parse(secretString);
     return zarfState.registryInfo.address;
@@ -30,14 +31,14 @@ export async function updateZarfManagedImageSecrets(
   let registrySecret: kind.Secret | undefined;
 
   try {
-    const namespaces = await listNamespaces();
+    const namespace = await K8s(kind.Namespace).Get();
+    const namespaces = namespace.items;
 
     for (const ns of namespaces) {
       try {
-        registrySecret = await getSecret(
-          ns.metadata!.name!,
-          zarfImagePullSecret,
-        );
+        registrySecret = await K8s(kind.Secret)
+          .InNamespace(ns.metadata!.name!)
+          .Get(zarfImagePullSecret);
       } catch (err) {
         // Continue checking the next namespace if this namespace doesn't have a "private-registry" secret
         if (JSON.stringify(err).includes("404")) {
