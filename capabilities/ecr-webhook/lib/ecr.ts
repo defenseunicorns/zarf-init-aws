@@ -58,7 +58,7 @@ export async function createRepos(
 
   if (!images) {
     Log.info(
-      `No repositories will be created for component '${deployedComponent.name}`,
+      `No repositories will be created for component '${deployedComponent.name}'`,
     );
     return;
   }
