@@ -1,47 +1,14 @@
+import { getSecret, listNamespaces } from "./k8s";
+import { ZarfState } from "../zarf-types";
 import { K8s, kind, Log } from "pepr";
-import { ECRPrivate, privateECRURLPattern } from "../../ecr-private";
-import { ECRPublic, publicECRURLPattern } from "../../ecr-public";
-import { getSecret, listNamespaces } from "../../lib/k8s";
-import { ZarfState } from "../../zarf-types";
 
 const zarfNamespace = "zarf";
-const zarfImagePullSecret = "private-registry";
 const zarfStateSecret = "zarf-state";
+const zarfImagePullSecret = "private-registry";
 const zarfAgentLabel = "zarf.dev/agent";
 const zarfManagedByLabel = "app.kubernetes.io/managed-by";
 
-export async function refreshECRToken(): Promise<void> {
-  let authToken: string = "";
-  const region = process.env.AWS_REGION;
-
-  if (region === undefined) {
-    throw new Error("AWS_REGION environment variable is not defined.");
-  }
-
-  try {
-    const ecrURL = await getECRURL();
-
-    if (privateECRURLPattern.test(ecrURL)) {
-      const ecrPrivate = new ECRPrivate(region);
-      authToken = await ecrPrivate.fetchECRToken();
-    }
-
-    if (publicECRURLPattern.test(ecrURL)) {
-      const ecrPublic = new ECRPublic(region);
-      authToken = await ecrPublic.fetchECRToken();
-    }
-
-    await updateZarfManagedImageSecrets(ecrURL, authToken);
-  } catch (err) {
-    throw new Error(
-      `unable to update ECR token in Zarf image pull secrets: ${JSON.stringify(
-        err,
-      )}`,
-    );
-  }
-}
-
-async function getECRURL(): Promise<string> {
+export async function getZarfRegistryURL(): Promise<string> {
   try {
     const secret = await getSecret(zarfNamespace, zarfStateSecret);
     const secretString = atob(secret.data!.state);
@@ -49,30 +16,40 @@ async function getECRURL(): Promise<string> {
     return zarfState.registryInfo.address;
   } catch (err) {
     throw new Error(
-      `unable to get ECR URL from the ${zarfStateSecret} secret: ${JSON.stringify(
+      `unable to get registry URL from the ${zarfStateSecret} secret: ${JSON.stringify(
         err,
       )}`,
     );
   }
 }
 
-async function updateZarfManagedImageSecrets(
+export async function updateZarfManagedImageSecrets(
   ecrURL: string,
   authToken: string,
 ): Promise<void> {
+  let registrySecret: kind.Secret | undefined;
+
   try {
     const namespaces = await listNamespaces();
 
     for (const ns of namespaces) {
-      const registrySecret = await getSecret(
-        ns.metadata!.name!,
-        zarfImagePullSecret,
-      );
+      try {
+        registrySecret = await getSecret(
+          ns.metadata!.name!,
+          zarfImagePullSecret,
+        );
+      } catch (err) {
+        // Continue checking the next namespace if this namespace doesn't have a "private-registry" secret
+        if (JSON.stringify(err).includes("404")) {
+          continue;
+        }
+        throw new Error(JSON.stringify(err));
+      }
 
       // Check if this is a Zarf managed secret or is in a namespace the Zarf agent will take action in
       if (
-        registrySecret.metadata!.labels &&
-        (registrySecret.metadata!.labels[zarfManagedByLabel] === "zarf" ||
+        registrySecret!.metadata!.labels &&
+        (registrySecret!.metadata!.labels[zarfManagedByLabel] === "zarf" ||
           (ns.metadata!.labels &&
             ns.metadata!.labels[zarfAgentLabel] !== "skip" &&
             ns.metadata!.labels[zarfAgentLabel] !== "ignore"))
@@ -86,8 +63,6 @@ async function updateZarfManagedImageSecrets(
           },
         };
         const dockerConfigData = btoa(JSON.stringify(dockerConfigJSON));
-        registrySecret.data![".dockerconfigjson"] = dockerConfigData;
-
         const updatedRegistrySecret = await K8s(kind.Secret).Apply(
           {
             metadata: {
@@ -95,7 +70,7 @@ async function updateZarfManagedImageSecrets(
               namespace: ns.metadata!.name,
             },
             data: {
-              data: registrySecret.data!.data,
+              [".dockerconfigjson"]: dockerConfigData,
             },
           },
           { force: true },

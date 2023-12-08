@@ -1,9 +1,10 @@
 import { Log } from "pepr";
 import { getRepositoryNames } from "./utils";
-import { ZarfState, DeployedComponent, ZarfComponent } from "../../zarf-types";
+import { DeployedComponent, ZarfComponent } from "../../zarf-types";
 import { privateECRURLPattern, ECRPrivate } from "../../ecr-private";
-import { publicECRURLPattern, ECRPublic } from "../../ecr-public";
-import { getSecret } from "../../lib/k8s";
+import { ECRPublic } from "../../ecr-public";
+import { isPrivateECRURL, isPublicECRURL } from "../../lib/utils";
+import { getZarfRegistryURL } from "../../lib/zarf";
 
 /**
  * Represents the result of checking whether the Zarf registry is an ECR registry.
@@ -20,36 +21,16 @@ interface ECRCheckResult {
  */
 export async function isECRregistry(): Promise<ECRCheckResult> {
   try {
-    // Fetch the Zarf state secret
-    const secret = await getSecret("zarf", "zarf-state");
+    const registryURL = await getZarfRegistryURL();
 
-    if (!secret.data || !secret.data.state) {
-      throw new Error(
-        "Error: 'zarf-state' secret or its 'state' data is undefined.",
-      );
-    }
-
-    const secretString = atob(secret.data.state);
-    const zarfState: ZarfState = JSON.parse(secretString);
-
-    if (zarfState.registryInfo.internalRegistry === true) {
-      Log.warn(
-        "Zarf is configured to use an internal registry. Skipping creating ECR repos.",
-      );
-      return { isECR: false, registryURL: zarfState.registryInfo.address };
-    }
-
-    const registryURL = zarfState.registryInfo.address;
-
-    if (
-      publicECRURLPattern.test(registryURL) ||
-      privateECRURLPattern.test(registryURL)
-    ) {
+    if (isPrivateECRURL(registryURL) || isPublicECRURL(registryURL)) {
       return { isECR: true, registryURL };
     }
   } catch (err) {
     throw new Error(
-      `Error: unable to determine if Zarf is configured to use an ECR registry: ${err}`,
+      `unable to determine if Zarf is configured to use an ECR registry: ${JSON.stringify(
+        err,
+      )}`,
     );
   }
 
@@ -93,13 +74,11 @@ export async function createRepos(
 
   const region = process.env.AWS_REGION;
 
-  if (!region) {
-    Log.error("AWS_REGION environment variable is not defined.");
-    return;
+  if (region === undefined) {
+    throw new Error("AWS_REGION environment variable is not defined.");
   }
 
-  // Create repositories for private ECR registry
-  if (privateECRURLPattern.test(registryURL)) {
+  if (isPrivateECRURL(registryURL)) {
     const accountId = getAccountId(registryURL);
     const ecrPrivate = new ECRPrivate(region);
 
@@ -107,8 +86,7 @@ export async function createRepos(
     await ecrPrivate.createRepositories(repoNames, accountId);
   }
 
-  // Create repositories for public ECR registry
-  if (publicECRURLPattern.test(registryURL)) {
+  if (isPublicECRURL(registryURL)) {
     const ecrPublic = new ECRPublic(region);
 
     Log.info("Attempting to create ECR repositories");
