@@ -23,11 +23,6 @@ variables:
     description: "The ARN of an IAM role to give Pepr necessary permissions to list and create ECR repositories, as well as fetch ECR authorization tokens."
     prompt: true
 
-  - name: ECR_CREDENTIAL_HELPER_CRON_SCHEDULE
-    description: "The schedule on which the ECR credential helper CronJob will run. https://kubernetes.io/docs/concepts/workloads/controllers/cron-jobs/#schedule-syntax"
-    # Run once an hour at the beginning of the hour
-    default: "0 * * * *"
-
 components:
   - name: ecr-bootstrap
     description: "Bootstrap the deployment by creating an ECR repository for the Pepr controller image"

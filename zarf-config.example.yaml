@@ -27,4 +27,3 @@ package:
       aws_region: us-east-1
       registry_type: ""
       ecr_role_arn: ""
-      ecr_credential_helper_cron_schedule: "*/1 * * * *"

@@ -15,16 +15,21 @@ export const ECRCredentialHelper = new Capability({
 
 const { OnSchedule } = ECRCredentialHelper;
 
+/**
+ * Following the same schedule used by the EKS Anywhere CronJob used to refresh ECR tokens.
+ * https://github.com/aws/eks-anywhere-packages/blob/main/charts/eks-anywhere-packages/templates/cronjob.yaml#L18
+ */
+
 OnSchedule({
   name: "refresh-ecr-token",
-  every: 10,
-  unit: "seconds",
+  every: 5,
+  unit: "hours",
   run: async () => {
     await refreshECRToken();
   },
 });
 
-export async function refreshECRToken(): Promise<void> {
+async function refreshECRToken(): Promise<void> {
   let authToken: string = "";
   const region = process.env.AWS_REGION;
 
