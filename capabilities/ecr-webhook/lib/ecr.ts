@@ -34,10 +34,9 @@ export async function createRepos(
   const repoNames = getRepositoryNames(images);
 
   if (repoNames.length === 0) {
-    Log.info(
-      `No repositories will be created for component '${deployedComponent.name}`,
+    throw new Error(
+      `unable to extract valid repository names from images (${images}) for component '${deployedComponent.name}'`,
     );
-    return;
   }
 
   const region = process.env.AWS_REGION;
