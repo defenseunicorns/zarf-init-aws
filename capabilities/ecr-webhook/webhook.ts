@@ -26,7 +26,7 @@ When(a.Secret)
 
     if (!result.isECR) {
       throw new Error(
-        `Error: A valid ECR URL was not found in the Zarf state secret: ${result.registryURL}\n
+        `A valid ECR URL was not found in the Zarf state secret: ${result.registryURL}\n
         Please provide a valid ECR registry URL.\n
         Example: '123456789012.dkr.ecr.us-east-1.amazonaws.com'`,
       );
@@ -38,9 +38,9 @@ When(a.Secret)
     let manuallyDecoded = false;
     let secretString: string;
 
-    if (!secret.data) {
+    if (secret.data === undefined) {
       throw new Error(
-        `Error: the '.data' field for package secret ${secret.metadata?.name} is undefined.`,
+        `the '.data' field for package secret ${secret.metadata?.name} is undefined.`,
       );
     }
 

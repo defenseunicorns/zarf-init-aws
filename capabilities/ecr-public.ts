@@ -64,8 +64,7 @@ export class ECRPublic implements ECRProvider {
       }
       return existingRepositories;
     } catch (err) {
-      Log.error(`Error checking for existing public ECR repositories: ${err}`);
-      return [];
+      throw new Error(`error listing existing public ECR repositories: ${err}`);
     }
   }
 
@@ -90,7 +89,7 @@ export class ECRPublic implements ECRProvider {
         }
       }
     } catch (err) {
-      Log.error(`Error creating public ECR repositories: ${err}`);
+      throw new Error(`error creating public ECR repositories: ${err}`);
     }
   }
 
@@ -105,9 +104,8 @@ export class ECRPublic implements ECRProvider {
       }
 
       return authOutput.authorizationData.authorizationToken;
-    } catch (error) {
-      Log.error(`Error calling GetAuthorizationTokenCommand(): ${error}`);
-      return "";
+    } catch (err) {
+      throw new Error(`error calling GetAuthorizationTokenCommand(): ${err}`);
     }
   }
 }

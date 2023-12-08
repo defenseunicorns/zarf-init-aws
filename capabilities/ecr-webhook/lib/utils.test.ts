@@ -59,7 +59,7 @@ describe("getRepositoryNames", () => {
     const testFunction = () => getRepositoryNames([]);
 
     expect(testFunction).toThrow(
-      "Error: expected at least 1 image reference, but got none",
+      "expected at least 1 image reference, but got none",
     );
   });
 });

@@ -85,7 +85,7 @@ export function componentReadyForWebhook(
  */
 export function getRepositoryNames(images: string[]): string[] {
   if (images.length === 0) {
-    throw new Error("Error: expected at least 1 image reference, but got none");
+    throw new Error("expected at least 1 image reference, but got none");
   }
 
   const repoNames = images.map((image: string) => {
@@ -156,7 +156,7 @@ export async function createReposAndUpdateStatus(
   try {
     await createRepos(deployedComponent, zarfComponent, registryURL);
   } catch (err) {
-    Log.error(`Failed to create ECR repositories: ${err.message}`);
+    Log.error(`unable to create ECR repositories: ${err}`);
     webhookStatus = "Failed";
   } finally {
     await updateWebhookStatus(
@@ -187,11 +187,10 @@ export async function updateWebhookStatus(
     // Fetch the package secret
     const secret = await getSecret(ns, secretName);
 
-    if (!secret.data) {
-      Log.error(
-        `Error: Package secret data is undefined for '${secretName}' in namespace '${ns}'.`,
+    if (secret.data === undefined) {
+      throw new Error(
+        `the '.data' field for package secret ${secret.metadata?.name} is undefined.`,
       );
-      return;
     }
 
     const secretString = atob(secret.data.data);
@@ -219,8 +218,8 @@ export async function updateWebhookStatus(
       { force: true },
     );
   } catch (err) {
-    Log.error(
-      `Error: Failed to update webhook status in package secret '${secretName}' in namespace '${ns}': ${JSON.stringify(
+    throw new Error(
+      `unable to update webhook status for package secret '${secretName}' in namespace '${ns}': ${JSON.stringify(
         err,
       )}`,
     );

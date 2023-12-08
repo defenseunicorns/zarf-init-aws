@@ -64,8 +64,9 @@ export class ECRPrivate implements ECRProvider {
       }
       return existingRepositories;
     } catch (err) {
-      Log.error(`Error checking for existing ECR repositories: ${err}`);
-      return [];
+      throw new Error(
+        `error listing existing private ECR repositories: ${err}`,
+      );
     }
   }
 
@@ -99,7 +100,7 @@ export class ECRPrivate implements ECRProvider {
         }
       }
     } catch (err) {
-      Log.error(`Error creating ECR repositories: ${err}`);
+      throw new Error(`error creating ECR repositories: ${err}`);
     }
   }
 
@@ -114,9 +115,8 @@ export class ECRPrivate implements ECRProvider {
       }
 
       return authOutput.authorizationData[0].authorizationToken;
-    } catch (error) {
-      Log.error(`Error calling GetAuthorizationTokenCommand(): ${error}`);
-      return "";
+    } catch (err) {
+      throw new Error(`error calling GetAuthorizationTokenCommand(): ${err}`);
     }
   }
 }
