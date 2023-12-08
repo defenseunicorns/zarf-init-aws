@@ -116,7 +116,7 @@ export class ECRPrivate implements ECRProvider {
 
       return authOutput.authorizationData[0].authorizationToken;
     } catch (err) {
-      throw new Error(`error calling GetAuthorizationTokenCommand(): ${err}`);
+      throw new Error(`error fetching ECR token: ${err}`);
     }
   }
 }
