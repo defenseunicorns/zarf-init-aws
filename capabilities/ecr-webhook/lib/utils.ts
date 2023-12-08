@@ -107,13 +107,13 @@ export function getRepositoryNames(images: string[]): string[] {
 
     // Remove the hash (SHA) if present
     const hashIndex = repoName.lastIndexOf("@");
-    if (substringFound(hashIndex) === true) {
+    if (substringFound(hashIndex)) {
       repoName = repoName.substring(0, hashIndex);
     }
 
     // Remove the tag if present
     const tagIndex = repoName.lastIndexOf(":");
-    if (substringFound(tagIndex) === true) {
+    if (substringFound(tagIndex)) {
       repoName = repoName.substring(0, tagIndex);
     }
 
