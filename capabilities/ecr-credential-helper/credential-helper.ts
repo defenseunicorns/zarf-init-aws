@@ -19,7 +19,6 @@ const { OnSchedule } = ECRCredentialHelper;
  * Following the same schedule used by the EKS Anywhere CronJob used to refresh ECR tokens.
  * https://github.com/aws/eks-anywhere-packages/blob/main/charts/eks-anywhere-packages/templates/cronjob.yaml#L18
  */
-
 OnSchedule({
   name: "refresh-ecr-token",
   every: 5,
