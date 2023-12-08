@@ -2,7 +2,8 @@ import { Capability } from "pepr";
 import { ECRPrivate } from "../ecr-private";
 import { ECRPublic } from "../ecr-public";
 import { isPrivateECRURL, isPublicECRURL } from "../lib/utils";
-import { getZarfRegistryURL, updateZarfManagedImageSecrets } from "../lib/zarf";
+import { updateZarfManagedImageSecrets } from "../lib/zarf";
+import { isECRregistry } from "../lib/ecr";
 
 /**
  * The ECR Credential Helper Capability refreshes ECR tokens for Zarf image pull secrets.
@@ -37,19 +38,27 @@ async function refreshECRToken(): Promise<void> {
   }
 
   try {
-    const ecrURL = await getZarfRegistryURL();
+    const result = await isECRregistry();
 
-    if (isPrivateECRURL(ecrURL)) {
+    if (!result.isECR) {
+      throw new Error(
+        `A valid ECR URL was not found in the Zarf state secret: ${result.registryURL}\n
+        Please provide a valid ECR registry URL.\n
+        Example: '123456789012.dkr.ecr.us-east-1.amazonaws.com'`,
+      );
+    }
+
+    if (isPrivateECRURL(result.registryURL)) {
       const ecrPrivate = new ECRPrivate(region);
       authToken = await ecrPrivate.fetchECRToken();
     }
 
-    if (isPublicECRURL(ecrURL)) {
+    if (isPublicECRURL(result.registryURL)) {
       const ecrPublic = new ECRPublic(region);
       authToken = await ecrPublic.fetchECRToken();
     }
 
-    await updateZarfManagedImageSecrets(ecrURL, authToken);
+    await updateZarfManagedImageSecrets(result.registryURL, authToken);
   } catch (err) {
     throw new Error(
       `unable to update ECR token in Zarf image pull secrets: ${err}`,

@@ -1,5 +1,5 @@
 import { Capability, Log, a } from "pepr";
-import { isECRregistry } from "./lib/ecr";
+import { isECRregistry } from "../lib/ecr";
 import { DeployedPackage } from "../zarf-types";
 import {
   createReposAndUpdateStatus,
