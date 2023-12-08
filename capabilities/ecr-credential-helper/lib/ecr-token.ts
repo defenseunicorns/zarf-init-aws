@@ -1,7 +1,7 @@
-import { Log } from "pepr";
+import { K8s, kind, Log } from "pepr";
 import { ECRPrivate, privateECRURLPattern } from "../../ecr-private";
 import { ECRPublic, publicECRURLPattern } from "../../ecr-public";
-import { getSecret, listNamespaces, updateSecret } from "../../lib/k8s";
+import { getSecret, listNamespaces } from "../../lib/k8s";
 import { ZarfState } from "../../zarf-types";
 
 const zarfNamespace = "zarf";
@@ -14,9 +14,8 @@ export async function refreshECRToken(): Promise<void> {
   let authToken: string = "";
   const region = process.env.AWS_REGION;
 
-  if (!region) {
-    Log.error("AWS_REGION environment variable is not defined.");
-    return;
+  if (region === undefined) {
+    throw new Error("AWS_REGION environment variable is not defined.");
   }
 
   try {
@@ -34,10 +33,11 @@ export async function refreshECRToken(): Promise<void> {
 
     await updateZarfManagedImageSecrets(ecrURL, authToken);
   } catch (err) {
-    Log.error(
-      `Error: unable to update ECR token in Zarf image pull secrets: ${err}`,
+    throw new Error(
+      `unable to update ECR token in Zarf image pull secrets: ${JSON.stringify(
+        err,
+      )}`,
     );
-    return;
   }
 }
 
@@ -48,8 +48,11 @@ async function getECRURL(): Promise<string> {
     const zarfState: ZarfState = JSON.parse(secretString);
     return zarfState.registryInfo.address;
   } catch (err) {
-    Log.error(`unable to get ECR URL from ${zarfStateSecret} secret: ${err}`);
-    return "";
+    throw new Error(
+      `unable to get ECR URL from the ${zarfStateSecret} secret: ${JSON.stringify(
+        err,
+      )}`,
+    );
   }
 }
 
@@ -85,10 +88,17 @@ async function updateZarfManagedImageSecrets(
         const dockerConfigData = btoa(JSON.stringify(dockerConfigJSON));
         registrySecret.data![".dockerconfigjson"] = dockerConfigData;
 
-        const updatedRegistrySecret = await updateSecret(
-          ns.metadata!.name!,
-          zarfImagePullSecret,
-          registrySecret.data!.data,
+        const updatedRegistrySecret = await K8s(kind.Secret).Apply(
+          {
+            metadata: {
+              name: zarfImagePullSecret,
+              namespace: ns.metadata!.name,
+            },
+            data: {
+              data: registrySecret.data!.data,
+            },
+          },
+          { force: true },
         );
 
         Log.info(
@@ -99,7 +109,8 @@ async function updateZarfManagedImageSecrets(
       }
     }
   } catch (err) {
-    Log.error(`"unable to update Zarf image pull secret: ${err}`);
-    return;
+    throw new Error(
+      `unable to update Zarf image pull secrets: ${JSON.stringify(err)}`,
+    );
   }
 }

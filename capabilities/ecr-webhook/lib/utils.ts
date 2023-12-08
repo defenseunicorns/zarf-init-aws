@@ -1,11 +1,11 @@
-import { Log } from "pepr";
+import { K8s, kind, Log } from "pepr";
 import { createRepos } from "./ecr";
 import {
   ZarfComponent,
   DeployedComponent,
   DeployedPackage,
 } from "../../zarf-types";
-import { getSecret, updateSecret } from "../../lib/k8s";
+import { getSecret } from "../../lib/k8s";
 
 /**
  * Represents a component check result, indicating whether a component is ready for a webhook to execute.
@@ -206,7 +206,18 @@ export async function updateWebhookStatus(
 
     secret.data.data = btoa(JSON.stringify(deployedPackage));
 
-    await updateSecret(ns, secretName, secret.data.data);
+    await K8s(kind.Secret).Apply(
+      {
+        metadata: {
+          name: secretName,
+          namespace: ns,
+        },
+        data: {
+          data: secret.data.data,
+        },
+      },
+      { force: true },
+    );
   } catch (err) {
     Log.error(
       `Error: Failed to update webhook status in package secret '${secretName}' in namespace '${ns}': ${JSON.stringify(
