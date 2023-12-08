@@ -5,6 +5,7 @@ import {
   createReposAndUpdateStatus,
   componentReadyForWebhook,
 } from "./lib/utils";
+import { zarfNamespace } from "../lib/constants";
 
 /**
  * The ECR Capability creates ECR repositories for a Zarf managed ECR registry
@@ -12,14 +13,14 @@ import {
 export const ECRhook = new Capability({
   name: "ecr",
   description: "Create ECR repositories for a Zarf managed ECR registry",
-  namespaces: ["pepr-system", "zarf"],
+  namespaces: ["pepr-system", zarfNamespace],
 });
 
 const { When } = ECRhook;
 
 When(a.Secret)
   .IsCreatedOrUpdated()
-  .InNamespace("zarf")
+  .InNamespace(zarfNamespace)
   .WithLabel("package-deploy-info")
   .Mutate(async request => {
     const result = await isECRregistry();

@@ -1,11 +1,12 @@
 import { ZarfState } from "../zarf-types";
 import { K8s, kind, Log } from "pepr";
-
-const zarfNamespace = "zarf";
-const zarfStateSecret = "zarf-state";
-const zarfImagePullSecret = "private-registry";
-const zarfAgentLabel = "zarf.dev/agent";
-const zarfManagedByLabel = "app.kubernetes.io/managed-by";
+import {
+  zarfNamespace,
+  zarfStateSecret,
+  zarfImagePullSecret,
+  zarfManagedByLabel,
+  zarfAgentLabel,
+} from "./constants";
 
 export async function getZarfRegistryURL(): Promise<string> {
   try {

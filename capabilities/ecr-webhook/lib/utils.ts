@@ -5,6 +5,7 @@ import {
   DeployedComponent,
   DeployedPackage,
 } from "../../zarf-types";
+import { zarfNamespace } from "../../lib/constants";
 
 /**
  * Represents a component check result, indicating whether a component is ready for a webhook to execute.
@@ -183,11 +184,11 @@ export async function updateWebhookStatus(
   webhookName: string,
   status: string,
 ): Promise<void> {
-  const ns = "zarf";
-
   try {
     // Fetch the package secret
-    const secret = await K8s(kind.Secret).InNamespace(ns).Get(secretName);
+    const secret = await K8s(kind.Secret)
+      .InNamespace(zarfNamespace)
+      .Get(secretName);
 
     if (secret.data === undefined) {
       throw new Error(
@@ -211,7 +212,7 @@ export async function updateWebhookStatus(
       {
         metadata: {
           name: secretName,
-          namespace: ns,
+          namespace: zarfNamespace,
         },
         data: {
           data: secret.data.data,
@@ -221,7 +222,7 @@ export async function updateWebhookStatus(
     );
   } catch (err) {
     throw new Error(
-      `unable to update webhook status for package secret '${secretName}' in namespace '${ns}': ${JSON.stringify(
+      `unable to update webhook status for package secret '${secretName}' in namespace '${zarfNamespace}': ${JSON.stringify(
         err,
       )}`,
     );
