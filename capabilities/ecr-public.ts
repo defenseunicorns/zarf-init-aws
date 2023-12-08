@@ -105,7 +105,7 @@ export class ECRPublic implements ECRProvider {
 
       return authOutput.authorizationData.authorizationToken;
     } catch (err) {
-      throw new Error(`error calling GetAuthorizationTokenCommand(): ${err}`);
+      throw new Error(`error fetching ECR token: ${err}`);
     }
   }
 }
