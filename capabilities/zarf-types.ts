@@ -444,16 +444,16 @@ export interface ZarfComponentActionDefaults {
 
 export interface ZarfChart {
     /**
-     * The path to the chart in the repo if using a git repo instead of a helm repo
+     * (git repo only) The sub directory to the chart within a git repo
      */
     gitPath?: string;
     /**
-     * The path to the local chart's folder or .tgz archive
+     * The path to a local chart's folder or .tgz archive
      */
     localPath?: string;
     /**
-     * The name of the chart to deploy; this should be the name of the chart as it is installed
-     * in the helm repo
+     * The name of the chart within Zarf; note that this must be unique and does not need to be
+     * the same as the name in the chart repo
      */
     name: string;
     /**
@@ -465,21 +465,25 @@ export interface ZarfChart {
      */
     noWait?: boolean;
     /**
-     * The name of the release to create; defaults to the name of the chart
+     * The name of the Helm release to create (defaults to the Zarf name of the chart)
      */
     releaseName?: string;
+    /**
+     * The name of a chart within a Helm repository (defaults to the Zarf name of the chart)
+     */
+    repoName?: string;
     /**
      * The URL of the OCI registry, chart repository, or git repo where the helm chart is stored
      */
     url?: string;
     /**
      * List of local values file paths or remote URLs to include in the package; these will be
-     * merged together
+     * merged together when deployed
      */
     valuesFiles?: string[];
     /**
      * The version of the chart to deploy; for git-based charts this is also the tag of the git
-     * repo
+     * repo by default (when not using the '@' syntax for 'repos')
      */
     version?: string;
 }
@@ -1289,6 +1293,7 @@ const typeMap: any = {
         { json: "namespace", js: "namespace", typ: "" },
         { json: "noWait", js: "noWait", typ: u(undefined, true) },
         { json: "releaseName", js: "releaseName", typ: u(undefined, "") },
+        { json: "repoName", js: "repoName", typ: u(undefined, "") },
         { json: "url", js: "url", typ: u(undefined, "") },
         { json: "valuesFiles", js: "valuesFiles", typ: u(undefined, a("")) },
         { json: "version", js: "version", typ: u(undefined, "") },
