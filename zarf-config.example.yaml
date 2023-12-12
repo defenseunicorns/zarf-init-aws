@@ -12,7 +12,7 @@ package:
       # The image reference to use for the Zarf agent
       agent_image_domain: ghcr.io/
       agent_image: defenseunicorns/zarf/agent
-      agent_image_tag: v0.31.3
+      agent_image_tag: v0.31.4
 
       # The image reference to use for the optional git-server Zarf deploys
       gitea_image: gitea/gitea
