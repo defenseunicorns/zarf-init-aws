@@ -102,6 +102,9 @@ export class ECRPublic implements ECRProvider {
       if (!authOutput.authorizationData) {
         throw new Error("No authorization data received from ECR");
       }
+      if (authOutput.authorizationData.authorizationToken === "") {
+        throw new Error("Empty authorization token received from ECR");
+      }
 
       return authOutput.authorizationData.authorizationToken;
     } catch (err) {

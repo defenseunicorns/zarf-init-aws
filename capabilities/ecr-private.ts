@@ -113,6 +113,9 @@ export class ECRPrivate implements ECRProvider {
       if (authOutput.authorizationData.length === 0) {
         throw new Error("No authorization data received from ECR");
       }
+      if (authOutput.authorizationData[0].authorizationToken === "") {
+        throw new Error("Empty authorization token received from ECR");
+      }
 
       return authOutput.authorizationData[0].authorizationToken;
     } catch (err) {
