@@ -4,7 +4,7 @@ import {
   zarfNamespace,
   zarfStateSecret,
   zarfImagePullSecret,
-  zarfManagedByLabel,
+  managedByLabel,
 } from "./constants";
 
 export async function getZarfRegistryURL(): Promise<string> {
@@ -36,7 +36,7 @@ export async function updateZarfManagedImageSecrets(
       try {
         await K8s(kind.Secret)
           .InNamespace(ns.metadata!.name!)
-          .WithLabel(zarfManagedByLabel, "zarf")
+          .WithLabel(managedByLabel, "zarf")
           .Get(zarfImagePullSecret);
       } catch (err) {
         // Continue checking the next namespace if this namespace doesn't have a "private-registry" secret
