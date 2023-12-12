@@ -120,6 +120,12 @@ export function getRepositoryNames(images: string[]): string[] {
       repoName = repoName.substring(0, tagIndex);
     }
 
+    // For official Docker Hub images, prepend "library/" if no namespace is specified.
+    // This ensures compatibility with how Zarf parses image references.
+    if (!repoName.includes("/")) {
+      repoName = `library/${repoName}`;
+    }
+
     return repoName;
   });
 
