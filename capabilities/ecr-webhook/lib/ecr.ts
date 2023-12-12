@@ -4,6 +4,7 @@ import { DeployedComponent, ZarfComponent } from "../../zarf-types";
 import { privateECRURLPattern, ECRPrivate } from "../../ecr-private";
 import { ECRPublic } from "../../ecr-public";
 import { isPrivateECRURL, isPublicECRURL } from "../../lib/utils";
+import { isECRregistry } from "../../lib/ecr";
 
 /**
  * Creates ECR repositories for a component in the specified registry.
@@ -18,6 +19,16 @@ export async function createRepos(
   zarfComponent: ZarfComponent,
   registryURL: string,
 ): Promise<void> {
+  const result = await isECRregistry();
+
+  if (!result.isECR) {
+    throw new Error(
+      `A valid ECR URL was not found in the Zarf state secret: ${result.registryURL}\n
+      Please provide a valid ECR registry URL.\n
+      Example: '123456789012.dkr.ecr.us-east-1.amazonaws.com'`,
+    );
+  }
+
   Log.info(
     `Gathering a list of ECR repository names to create for component '${deployedComponent.name}'`,
   );
