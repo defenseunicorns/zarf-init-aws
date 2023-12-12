@@ -29,20 +29,18 @@ export async function updateZarfManagedImageSecrets(
   authToken: string,
 ): Promise<void> {
   try {
-    const namespace = await K8s(kind.Namespace).Get();
+    const namespace = await K8s(kind.Namespace)
+      .WithLabel(managedByLabel, "zarf")
+      .Get();
+
     const namespaces = namespace.items;
 
     for (const ns of namespaces) {
       try {
         await K8s(kind.Secret)
           .InNamespace(ns.metadata!.name!)
-          .WithLabel(managedByLabel, "zarf")
           .Get(zarfImagePullSecret);
       } catch (err) {
-        // Continue checking the next namespace if this namespace doesn't have a "private-registry" secret
-        if (JSON.stringify(err).includes("404")) {
-          continue;
-        }
         throw new Error(JSON.stringify(err));
       }
       // Update the secret with the new ECR auth token
@@ -74,8 +72,6 @@ export async function updateZarfManagedImageSecrets(
       );
     }
   } catch (err) {
-    throw new Error(
-      `unable to update Zarf image pull secrets: ${JSON.stringify(err)}`,
-    );
+    throw new Error(`unable to update Zarf image pull secrets: ${err}`);
   }
 }
