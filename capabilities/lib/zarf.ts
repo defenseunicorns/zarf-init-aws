@@ -29,11 +29,9 @@ export async function updateZarfManagedImageSecrets(
   authToken: string,
 ): Promise<void> {
   try {
-    const namespace = await K8s(kind.Namespace)
+    const namespaces = await K8s(kind.Namespace)
       .WithLabel(managedByLabel, "zarf")
-      .Get();
-
-    const namespaces = namespace.items;
+      .Get().items;
 
     for (const ns of namespaces) {
       try {
