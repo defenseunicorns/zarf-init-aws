@@ -29,18 +29,11 @@ export async function updateZarfManagedImageSecrets(
   authToken: string,
 ): Promise<void> {
   try {
-    const namespaces = await K8s(kind.Namespace)
-      .WithLabel(managedByLabel, "zarf")
-      .Get().items;
+    const namespaces = (
+      await K8s(kind.Namespace).WithLabel(managedByLabel, "zarf").Get()
+    ).items;
 
     for (const ns of namespaces) {
-      try {
-        await K8s(kind.Secret)
-          .InNamespace(ns.metadata!.name!)
-          .Get(zarfImagePullSecret);
-      } catch (err) {
-        throw new Error(JSON.stringify(err));
-      }
       // Update the secret with the new ECR auth token
       const dockerConfigJSON = {
         auths: {
