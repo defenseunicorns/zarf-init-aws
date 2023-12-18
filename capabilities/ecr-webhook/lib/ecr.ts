@@ -34,15 +34,7 @@ export async function createRepos(
   );
 
   const images = zarfComponent.images;
-
-  if (!images) {
-    Log.info(
-      `No repositories will be created for component '${deployedComponent.name}'`,
-    );
-    return;
-  }
-
-  const repoNames = getRepositoryNames(images);
+  const repoNames = getRepositoryNames(images!);
 
   if (repoNames.length === 0) {
     throw new Error(
