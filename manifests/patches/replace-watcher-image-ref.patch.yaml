@@ -1,0 +1,14 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pepr-b95dbd80-e078-5eb9-aaf3-bcb9567417d0-watcher
+  namespace: pepr-system
+spec:
+  selector:
+    matchLabels:
+      app: pepr-b95dbd80-e078-5eb9-aaf3-bcb9567417d0-watcher
+  template:
+    spec:
+      containers:
+        - name: watcher
+          image: "###ZARF_REGISTRY###/###ZARF_CONST_PEPR_IMAGE###:###ZARF_CONST_PEPR_IMAGE_TAG###"

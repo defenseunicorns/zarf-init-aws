@@ -1,10 +1,11 @@
 import { Capability, Log, a } from "pepr";
-import { isECRregistry } from "./lib/ecr";
-import { DeployedPackage } from "./zarf-types";
+import { isECRregistry } from "../lib/ecr";
+import { DeployedPackage } from "../zarf-types";
 import {
   createReposAndUpdateStatus,
   componentReadyForWebhook,
 } from "./lib/utils";
+import { zarfNamespace } from "../lib/constants";
 
 /**
  * The ECR Capability creates ECR repositories for a Zarf managed ECR registry
@@ -12,14 +13,14 @@ import {
 export const ECRhook = new Capability({
   name: "ecr",
   description: "Create ECR repositories for a Zarf managed ECR registry",
-  namespaces: ["pepr-system"],
+  namespaces: ["pepr-system", zarfNamespace],
 });
 
 const { When } = ECRhook;
 
 When(a.Secret)
   .IsCreatedOrUpdated()
-  .InNamespace("zarf")
+  .InNamespace(zarfNamespace)
   .WithLabel("package-deploy-info")
   .Mutate(async request => {
     const result = await isECRregistry();
@@ -33,11 +34,16 @@ When(a.Secret)
     }
 
     const webhookName = "ecr-webhook";
-
     const secret = request.Raw;
-    let deployedPackage: DeployedPackage;
-    let secretString: string;
+
     let manuallyDecoded = false;
+    let secretString: string;
+
+    if (secret.data === undefined) {
+      throw new Error(
+        `the '.data' field for package secret ${secret.metadata?.name} is undefined.`,
+      );
+    }
 
     try {
       secretString = atob(secret.data.data);
@@ -46,11 +52,7 @@ When(a.Secret)
       secretString = secret.data.data;
     }
 
-    try {
-      deployedPackage = JSON.parse(secretString);
-    } catch (err) {
-      throw new Error(`Failed to parse the secret data: ${err.message}`);
-    }
+    const deployedPackage: DeployedPackage = JSON.parse(secretString);
 
     const componentRes = componentReadyForWebhook(deployedPackage, webhookName);
     if (!componentRes) {
@@ -77,7 +79,7 @@ When(a.Secret)
     createReposAndUpdateStatus(
       componentRes.deployedComponent,
       result.registryURL,
-      secret.metadata.name,
+      secret.metadata?.name as string,
       webhookName,
       componentRes.component,
     );

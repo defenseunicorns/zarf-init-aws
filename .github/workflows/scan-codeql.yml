@@ -27,19 +27,9 @@ jobs:
       contents: read
       security-events: write
 
-    strategy:
-      fail-fast: false
-      matrix:
-        language: ["go", "javascript", "typescript"]
-        # CodeQL supports [ 'cpp', 'csharp', 'go', 'java', 'javascript', 'python', 'ruby' ]
-        # Learn more about CodeQL language support at https://aka.ms/codeql-docs/language-support
-
     steps:
       - name: Checkout
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
-
-      - name: Setup Go
-        uses: defenseunicorns/zarf/.github/actions/golang@main
 
       - name: Setup NodeJS
         uses: actions/setup-node@8f152de45cc393bb48ce5d89d36b731f54556e65 # v4.0.0
@@ -54,13 +44,10 @@ jobs:
         env:
           CODEQL_EXTRACTOR_GO_BUILD_TRACING: on
         with:
-          languages: ${{ matrix.language }}
+          languages: typescript
           config-file: ./.github/codeql.yaml
-
-      - name: Build
-        run: make build-credential-helper-linux-amd
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@407ffafae6a767df3e0230c3df91b6443ae8df75 # v2.22.8
         with:
-          category: "/language:${{matrix.language}}"
+          category: "/language:typescript"

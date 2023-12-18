@@ -56,9 +56,6 @@ jobs:
       - name: Install Node dependencies
         run: npm ci
 
-      - name: Setup Go
-        uses: defenseunicorns/zarf/.github/actions/golang@main
-
       - name: Build ECR Pepr module
         run: make build-module
 
@@ -143,6 +140,8 @@ jobs:
       - name: Save logs
         if: always()
         uses: defenseunicorns/zarf/.github/actions/save-logs@main
+        with:
+          suffix: "private"
 
   # Deploy and test AWS init package with public ECR registry
   validate-public-ecr:
@@ -211,3 +210,5 @@ jobs:
       - name: Save logs
         if: always()
         uses: defenseunicorns/zarf/.github/actions/save-logs@main
+        with:
+          suffix: "public"

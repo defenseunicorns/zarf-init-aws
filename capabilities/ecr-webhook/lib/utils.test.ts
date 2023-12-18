@@ -4,6 +4,10 @@ import { getAccountId } from "./ecr";
 describe("getRepositoryNames", () => {
   const testCases = [
     {
+      input: "nginx",
+      expected: "library/nginx",
+    },
+    {
       input: "defenseunicorns/pepr/controller:v0.13.0",
       expected: "defenseunicorns/pepr/controller",
     },
@@ -59,7 +63,7 @@ describe("getRepositoryNames", () => {
     const testFunction = () => getRepositoryNames([]);
 
     expect(testFunction).toThrow(
-      "Error: expected at least 1 image reference, but got none",
+      "expected at least 1 image reference, but got none",
     );
   });
 });

@@ -4,4 +4,5 @@ resources:
 patches:
   - path: patches/add-service-account-annotation.patch.yaml
   - path: patches/add-env-var.patch.yaml
-  - path: patches/replace-image-ref.patch.yaml
+  - path: patches/replace-server-image-ref.patch.yaml
+  - path: patches/replace-watcher-image-ref.patch.yaml
