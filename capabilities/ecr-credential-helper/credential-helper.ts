@@ -2,7 +2,10 @@ import { Capability } from "pepr";
 import { ECRPrivate } from "../ecr-private";
 import { ECRPublic } from "../ecr-public";
 import { isPrivateECRURL, isPublicECRURL } from "../lib/utils";
-import { updateZarfManagedImageSecrets } from "../lib/zarf";
+import {
+  updateZarfManagedImageSecrets,
+  updateZarfStateSecret,
+} from "../lib/zarf";
 import { isECRregistry } from "../lib/ecr";
 
 /**
@@ -59,9 +62,10 @@ async function refreshECRToken(): Promise<void> {
     }
 
     await updateZarfManagedImageSecrets(result.registryURL, authToken);
+    await updateZarfStateSecret(authToken);
   } catch (err) {
     throw new Error(
-      `unable to update ECR token in Zarf image pull secrets: ${err}`,
+      `unable to update ECR token in Zarf managed secrets: ${err}`,
     );
   }
 }

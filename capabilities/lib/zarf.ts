@@ -66,3 +66,43 @@ export async function updateZarfManagedImageSecrets(
     throw new Error(`unable to update Zarf image pull secrets: ${err}`);
   }
 }
+
+export async function updateZarfStateSecret(authToken: string): Promise<void> {
+  try {
+    const stateSecret = await K8s(kind.Secret)
+      .InNamespace(zarfNamespace)
+      .Get(zarfStateSecret);
+    const secretString = atob(stateSecret.data!.state);
+    const oldZarfState: ZarfState = JSON.parse(secretString);
+
+    const updatedZarfState: ZarfState = {
+      ...oldZarfState,
+      registryInfo: {
+        ...oldZarfState.registryInfo,
+        pushPassword: authToken,
+        pullPassword: authToken,
+      },
+    };
+
+    const updatedStateSecret = await K8s(kind.Secret).Apply(
+      {
+        metadata: {
+          name: zarfStateSecret,
+          namespace: zarfNamespace,
+        },
+        data: {
+          ["state"]: btoa(JSON.stringify(updatedZarfState)),
+        },
+      },
+      { force: true },
+    );
+
+    Log.info(
+      `Successfully updated secret '${
+        updatedStateSecret.metadata!.name
+      }' in namespace '${zarfNamespace}'`,
+    );
+  } catch (err) {
+    throw new Error(`unable to update the Zarf state secret: ${err}`);
+  }
+}
