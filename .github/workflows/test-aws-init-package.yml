@@ -140,6 +140,8 @@ jobs:
       - name: Save logs
         if: always()
         uses: defenseunicorns/zarf/.github/actions/save-logs@main
+        with:
+          suffix: "private"
 
   # Deploy and test AWS init package with public ECR registry
   validate-public-ecr:
@@ -208,3 +210,5 @@ jobs:
       - name: Save logs
         if: always()
         uses: defenseunicorns/zarf/.github/actions/save-logs@main
+        with:
+          suffix: "public"
