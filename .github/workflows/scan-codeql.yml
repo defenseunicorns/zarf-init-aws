@@ -42,7 +42,7 @@ jobs:
         uses: defenseunicorns/zarf/.github/actions/golang@main
 
       - name: Setup NodeJS
-        uses: actions/setup-node@8f152de45cc393bb48ce5d89d36b731f54556e65 # v4.0.0
+        uses: actions/setup-node@b39b52d1213e96004bfcb1c61a8a6fa8ab84f3e8 # v4.0.1
         with:
           node-version: 20
           cache: "npm"
@@ -50,7 +50,7 @@ jobs:
 
       # Initializes the CodeQL tools for scanning.
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@407ffafae6a767df3e0230c3df91b6443ae8df75 # v2.22.8
+        uses: github/codeql-action/init@1500a131381b66de0c52ac28abb13cd79f4b7ecc # v2.22.12
         env:
           CODEQL_EXTRACTOR_GO_BUILD_TRACING: on
         with:
@@ -61,6 +61,6 @@ jobs:
         run: make build-credential-helper-linux-amd
 
       - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@407ffafae6a767df3e0230c3df91b6443ae8df75 # v2.22.8
+        uses: github/codeql-action/analyze@1500a131381b66de0c52ac28abb13cd79f4b7ecc # v2.22.12
         with:
           category: "/language:${{matrix.language}}"
