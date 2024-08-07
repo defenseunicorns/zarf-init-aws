@@ -28,7 +28,7 @@
   "dependencies": {
     "@aws-sdk/client-ecr": "^3.465.0",
     "@aws-sdk/client-ecr-public": "^3.465.0",
-    "pepr": "^0.18.0"
+    "pepr": "^0.34.0"
   },
   "devDependencies": {
     "@jest/globals": "^29.6.4",
